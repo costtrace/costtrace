@@ -186,6 +186,13 @@
   a.link-card { display: block; text-decoration: none; color: inherit; transition: border-color .15s; }
   a.link-card:hover { border-color: var(--accent); }
   a.link-card p { overflow-wrap: anywhere; }
+  .fig .pm { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .comment-note { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .caption { margin: 10px 4px 0; font-size: 14px; color: var(--muted); }
+  .cloud code { display: block; margin-top: 6px; font: 12px var(--mono); color: var(--accent); overflow-wrap: anywhere; }
+  .pillars.four { grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .pillars.four { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .pillars.four { grid-template-columns: repeat(4, 1fr); } }
   .pillars { display: grid; gap: 14px; grid-template-columns: 1fr; }
   @media (min-width: 720px) { .pillars { grid-template-columns: repeat(3, 1fr); } }
 
@@ -212,8 +219,9 @@
       <span class="eyebrow">Open source · Multi-cloud · FOCUS-native</span>
       <h1>Know what every deploy really costs.</h1>
       <p class="lede">
-        Cost estimates are guesses. CostTrace reads your actual cloud bill and traces the change in
-        spend back to the pull request that caused it, then checks it against the estimate.
+        Cost estimates only see infrastructure diffs. CostTrace reads your actual cloud bill and traces
+        every change in spend back to the pull request that caused it, including changes from plain
+        application code, then checks it against the estimate.
       </p>
       <div class="cta">
         <a class="btn primary" href="https://github.com/costtrace/costtrace"><svg class="gh" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
@@ -223,24 +231,25 @@
       <figure class="comment" aria-label="Example CostTrace pull request comment">
         <div class="comment-head"><span class="avatar" aria-hidden="true"></span><strong>costtrace</strong> commented 7 days after deploy</div>
         <div class="comment-body">
-          <h3>🧾 PR #101: Route payment provider calls through a NAT gateway</h3>
-          <div class="meta"><code>9f1c2ab</code> · checkout · deployed 2026-09-08 14:00 UTC</div>
+          <h3>🧾 PR #104: Load order line items individually in invoice view</h3>
+          <div class="meta"><code>7d24e0c</code> · checkout · deployed 2026-09-18 11:00 UTC</div>
           <div class="figures">
-            <div class="fig"><div class="label">Estimated</div><div class="num">+$310</div></div>
-            <div class="fig"><div class="label">Measured</div><div class="num">+$1,376</div></div>
-            <div class="fig warn"><div class="label">vs. estimate</div><div class="num">4.4×</div></div>
+            <div class="fig"><div class="label">Estimated</div><div class="num">$0</div></div>
+            <div class="fig"><div class="label">Measured</div><div class="num">+$579<span class="pm">± $52 range</span></div></div>
+            <div class="fig warn"><div class="label">vs. estimate</div><div class="num">missed</div></div>
           </div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>Resource</th><th>Provider</th><th>Change</th><th style="text-align:right">After / day</th><th style="text-align:right">Monthly impact</th></tr></thead>
+              <thead><tr><th>Resource</th><th>Provider</th><th>Change</th><th style="text-align:right">Before / day</th><th style="text-align:right">After / day</th><th style="text-align:right">Monthly impact</th></tr></thead>
               <tbody>
-                <tr><td>checkout-egress-nat</td><td>AWS · VPC</td><td><span class="pill">added</span></td><td class="num">$44.02</td><td class="num">+$1,338.96</td></tr>
-                <tr><td>checkout-egress-logs</td><td>AWS · CloudWatch</td><td><span class="pill">added</span></td><td class="num">$1.21</td><td class="num">+$36.81</td></tr>
+                <tr><td>orders-db</td><td>AWS · RDS</td><td><span class="pill">affected</span></td><td class="num">$52.23</td><td class="num">$71.27</td><td class="num">+$578.92</td></tr>
               </tbody>
             </table>
           </div>
+          <p class="comment-note">Service-level impact: no infrastructure changed, but the database bill rose after the deploy. 3 other checkout resources held steady.</p>
         </div>
       </figure>
+      <p class="caption">An N+1 query with zero infrastructure changes. A pre-merge estimate prices it at $0.</p>
     </div>
 
     <section>
@@ -256,6 +265,19 @@
             <h3>CostTrace measurement</h3>
             <p>Real billed cost from your provider's export, including your discounts, attributed to the exact commit, and compared against the estimate.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="catches">
+      <div class="wrap">
+        <h2>What it catches</h2>
+        <p class="sub">Every deploy, measured from the bill, whether the change was infrastructure, code or a clean-up.</p>
+        <div class="pillars four">
+          <div class="card"><h3>New &amp; resized infrastructure</h3><p>A NAT gateway estimated at $310/mo that really costs $1,368, because data processing never shows up in a Terraform plan.</p></div>
+          <div class="card"><h3>Application code</h3><p>Queries, retries, log volume or LLM calls that raise the bill of unchanged resources, attributed to the PR that deployed them.</p></div>
+          <div class="card"><h3>Savings</h3><p>Deleted and downsized resources count as savings, so clean-up work gets the credit it earns.</p></div>
+          <div class="card"><h3>Only real signals</h3><p>Every figure has a ± range from daily variation, noise isn't listed as impact, and back-to-back deploys are kept apart.</p></div>
         </div>
       </div>
     </section>
@@ -286,7 +308,7 @@
         <p class="sub">No agents and no SaaS account. CostTrace runs in your CI or on your laptop against your own billing export.</p>
         <ol class="steps">
           <li><h3>Tag</h3><p>Deploys stamp resources with <code>costtrace_sha</code>, <code>_pr</code>, <code>_repo</code> and <code>_service</code>. One convention that's valid on every cloud.</p></li>
-          <li><h3>Measure</h3><p>CostTrace reads your FOCUS billing export and compares each touched resource before vs. after the deploy.</p></li>
+          <li><h3>Measure</h3><p>CostTrace reads your FOCUS export straight from S3, Blob Storage or BigQuery and compares costs before vs. after each deploy.</p></li>
           <li><h3>Attribute</h3><p>New, changed and removed resources, plus cost shifts from application code in the same service, each with a ± range.</p></li>
           <li><h3>Report</h3><p>Post a PR comment, print a table, export JSON, or fail CI when a change blows past its estimate.</p></li>
         </ol>
@@ -296,39 +318,44 @@
     <section>
       <div class="wrap">
         <h2>One tool, every cloud</h2>
-        <p class="sub">CostTrace is built on <a href="https://focus.finops.org">FOCUS</a>, the FinOps Foundation's open billing standard, so the same engine works across providers.</p>
+        <p class="sub">CostTrace is built on <a href="https://focus.finops.org">FOCUS</a>, the FinOps Foundation's open billing standard that every major cloud now exports. Point it straight at the export: no data pipeline, no copy.</p>
         <div class="clouds">
-          <div class="cloud">AWS<small>Data Exports (FOCUS)</small></div>
-          <div class="cloud">Microsoft Azure<small>Cost Management exports</small></div>
-          <div class="cloud">Oracle Cloud<small>FOCUS cost reports</small></div>
-          <div class="cloud">Google Cloud<small>via BigQuery adapter (roadmap)</small></div>
+          <div class="cloud">AWS<small>Data Exports in S3</small><code>s3://bucket/prefix</code></div>
+          <div class="cloud">Microsoft Azure<small>Cost Management exports</small><code>azure://account/container</code></div>
+          <div class="cloud">Google Cloud<small>FOCUS export in BigQuery</small><code>bq://project.dataset.table</code></div>
+          <div class="cloud">Oracle Cloud<small>FOCUS cost reports</small><code>./exports</code></div>
         </div>
+        <p class="sub" style="margin:16px 0 0">Reads CSV, gzipped CSV and Parquet, fetching only the columns and billing months a report needs. Two million billing rows take about five seconds.</p>
       </div>
     </section>
 
     <section>
       <div class="wrap">
         <h2>Try it in a minute</h2>
-        <p class="sub">The repository ships with a multi-cloud sample dataset, so you don't need cloud access to see it work.</p>
-<pre class="term"><span class="c"># measure every change in a deploy log</span>
-<span class="p">$</span> npx costtrace report --focus focus-export.csv --changes changes.json
+        <p class="sub">Install the CLI and the connector for your cloud. No cloud account handy? The repository ships a multi-cloud sample dataset.</p>
+<pre class="term"><span class="c"># the CLI, plus the connector for your cloud (aws, azure or gcp)</span>
+<span class="p">$</span> npm install costtrace @costtrace/aws
+
+<span class="c"># measure every change in a deploy log, straight from your billing export</span>
+<span class="p">$</span> npx costtrace report --focus s3://my-billing/focus/data/ --changes changes.json
 
 <span class="c"># a PR comment for one change; fail CI if it's over estimate</span>
-<span class="p">$</span> npx costtrace report --focus focus-export.csv --changes changes.json \
-    --sha 9f1c2ab --format markdown --fail-on-over
+<span class="p">$</span> npx costtrace report --focus s3://my-billing/focus/data/ --changes changes.json \
+    --sha 7d24e0c --format markdown --fail-on-over
 
 <span class="c"># the tags your IaC should apply</span>
-<span class="p">$</span> npx costtrace tags --sha "$GITHUB_SHA" --pr 101 --service checkout --format terraform</pre>
+<span class="p">$</span> npx costtrace tags --sha "$GITHUB_SHA" --pr 104 --service checkout --format terraform</pre>
       </div>
     </section>
 
     <section>
       <div class="wrap">
         <h2>Built to be trusted with your bill</h2>
-        <div class="pillars">
+        <div class="pillars four">
           <div class="card"><h3>Runs where you do</h3><p>Local-first. Your billing data never leaves your machine or CI.</p></div>
           <div class="card"><h3>Open source</h3><p>Apache-2.0 licensed, from the attribution engine to the CLI.</p></div>
-          <div class="card"><h3>Verifiable releases</h3><p>Every npm package ships with signed build provenance from GitHub Actions.</p></div>
+          <div class="card"><h3>Verifiable releases</h3><p>Every npm package ships with signed build provenance, and releases need a maintainer's 2FA approval.</p></div>
+          <div class="card"><h3>Least access</h3><p>Read-only access to the billing export is all it needs, using your cloud's standard credentials.</p></div>
         </div>
       </div>
     </section>

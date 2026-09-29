@@ -165,14 +165,14 @@ release:
    number, then commit.
 2. Tag and push:
    ```bash
-   git tag v0.1.2
-   git push origin v0.1.2
+   git tag v0.2.0
+   git push origin v0.2.0
    ```
 
 3. Approve the staged packages with `npm stage approve <stage-id>` (IDs are in the workflow
    summary and in `npm stage list <package>`), or on npmjs.com. Approve **`@costtrace/focus`
-   first, then `@costtrace/core`, then `costtrace`**, and make sure each approval succeeds before the
-   next. A package approved before its dependency is live can't be installed until the dependency
+   first, then `@costtrace/core` and the connectors, then `costtrace`**, and make sure each approval
+   succeeds before the next. A package approved before its dependency is live can't be installed until the dependency
    is approved. Approval fails with "automated review hasn't finished" for the first few minutes
    after staging, so just retry.
 

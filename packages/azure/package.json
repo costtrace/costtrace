@@ -1,6 +1,6 @@
 {
   "name": "@costtrace/azure",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Read FOCUS exports for CostTrace directly from Azure Blob Storage (Cost Management exports).",
   "license": "Apache-2.0",
   "type": "module",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@azure/identity": "^4.13.3",
     "@azure/storage-blob": "^12.34.0",
-    "@costtrace/focus": "0.1.2"
+    "@costtrace/focus": "0.2.0"
   },
   "repository": {
     "type": "git",

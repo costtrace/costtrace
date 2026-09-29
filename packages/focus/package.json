@@ -1,6 +1,6 @@
 {
   "name": "@costtrace/focus",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Parse and validate FinOps FOCUS cost and usage data.",
   "license": "Apache-2.0",
   "type": "module",

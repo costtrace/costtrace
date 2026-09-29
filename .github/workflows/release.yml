@@ -50,12 +50,20 @@ jobs:
       - run: npm test
       - run: npm run build
 
-      - run: npm stage publish -w @costtrace/focus --access public
-      - run: npm stage publish -w @costtrace/core --access public
-      - run: npm stage publish -w @costtrace/aws --access public
-      - run: npm stage publish -w @costtrace/azure --access public
-      - run: npm stage publish -w @costtrace/gcp --access public
-      - run: npm stage publish -w costtrace --access public
+      # Dependencies first. Versions already on npm are skipped, which makes re-runs safe and lets
+      # a brand-new package be published by hand once (npm only allows trusted publishing for
+      # packages that already exist).
+      - name: Stage packages on npm
+        run: |
+          for pkg in focus:@costtrace/focus core:@costtrace/core aws:@costtrace/aws azure:@costtrace/azure gcp:@costtrace/gcp cli:costtrace; do
+            dir=${pkg%%:*}; name=${pkg#*:}
+            version=$(node -p "require('./packages/$dir/package.json').version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version is already published; skipping"
+            else
+              npm stage publish -w "$name" --access public
+            fi
+          done
 
       - name: Approval instructions
         env:

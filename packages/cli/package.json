@@ -1,6 +1,6 @@
 {
   "name": "costtrace",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Trace measured cloud cost to the change that caused it.",
   "license": "Apache-2.0",
   "type": "module",
@@ -12,8 +12,8 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@costtrace/core": "0.1.2",
-    "@costtrace/focus": "0.1.2"
+    "@costtrace/core": "0.2.0",
+    "@costtrace/focus": "0.2.0"
   },
   "repository": {
     "type": "git",
@@ -35,9 +35,9 @@
     "url": "https://github.com/costtrace/costtrace/issues"
   },
   "peerDependencies": {
-    "@costtrace/aws": "0.1.2",
-    "@costtrace/azure": "0.1.2",
-    "@costtrace/gcp": "0.1.2"
+    "@costtrace/aws": "0.2.0",
+    "@costtrace/azure": "0.2.0",
+    "@costtrace/gcp": "0.2.0"
   },
   "peerDependenciesMeta": {
     "@costtrace/aws": {
