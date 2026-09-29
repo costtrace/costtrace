@@ -12,11 +12,23 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/costtrace/costtrace.git",
     "directory": "packages/focus"
   },
-  "keywords": ["finops", "focus", "cloud-cost", "billing"]
+  "keywords": [
+    "finops",
+    "focus",
+    "cloud-cost",
+    "billing"
+  ],
+  "scripts": {
+    "prepublishOnly": "tsc -b"
+  },
+  "homepage": "https://github.com/costtrace/costtrace#readme"
 }
