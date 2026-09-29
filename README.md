@@ -14,6 +14,21 @@ PR #101  9f1c2ab  checkout  estimate +$310.00/mo  measured +$1,375.76/mo  over e
 It works with any cloud, because it reads the vendor-neutral
 [FOCUS](https://focus.finops.org) billing format that AWS, Azure, Oracle Cloud and others export natively.
 
+## Why not just cloud budgets?
+
+Budgets and anomaly alerts (AWS Budgets, AWS Cost Anomaly Detection, and the Azure and GCP
+equivalents) tell you that spend went up. CostTrace tells you **which change** caused it.
+
+| | AWS Budgets & anomaly alerts | CostTrace |
+|---|---|---|
+| Answers | "Are we over plan?" | **"Which change caused it?"** |
+| Unit | Account, service, month | **Pull request, commit, deploy** |
+| Reaches | Finance, by email | **The engineer, on the PR** |
+| Estimate vs. actual | — | **Per change** |
+| Clouds | One tool per provider | **AWS, Azure, GCP, OCI via FOCUS** |
+
+The two work well together: when a budget alert fires, CostTrace shows which deploys explain it.
+
 ## How it works
 
 1. **Tag.** Every deploy stamps its resources with `costtrace_sha`, `costtrace_pr`, `costtrace_repo`

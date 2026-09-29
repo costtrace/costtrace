@@ -84,7 +84,8 @@
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
   .brand svg { flex: none; }
   nav.links { display: flex; gap: 18px; font-size: 15px; }
-  nav.links a { color: var(--muted); text-decoration: none; }
+  nav.links a { color: var(--muted); text-decoration: none; white-space: nowrap; }
+  @media (max-width: 480px) { nav.links { gap: 14px; } nav.links .wide-only { display: none; } }
   nav.links a:hover { color: var(--text); }
 
   .hero { padding-top: 48px; padding-bottom: 32px; }
@@ -139,6 +140,14 @@
   td.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
   .pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
 
+  table.versus { background: var(--surface); min-width: 0; table-layout: fixed; }
+  table.versus th, table.versus td { white-space: normal; vertical-align: top; overflow-wrap: anywhere; }
+  table.versus th:first-child, table.versus td:first-child { width: 28%; }
+  @media (max-width: 480px) { table.versus { font-size: 13px; } table.versus th, table.versus td { padding: 8px; } }
+  table.versus td:first-child { color: var(--muted); font-size: 13px; }
+  table.versus td:last-child { color: var(--accent); }
+  table.versus strong { color: var(--text); }
+
   section { padding: 56px 0; border-top: 1px solid var(--border); }
   section h2 { font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -0.01em; margin: 0 0 10px; }
   section > .wrap > p.sub { color: var(--muted); margin: 0 0 28px; max-width: 62ch; }
@@ -187,7 +196,8 @@
       CostTrace
     </a>
     <nav class="links" aria-label="Primary">
-      <a href="#how">How it works</a>
+      <a href="#vs-budgets">Why not budgets?</a>
+      <a class="wide-only" href="#how">How it works</a>
       <a href="https://github.com/costtrace/costtrace">GitHub</a>
     </nav>
   </header>
@@ -242,6 +252,26 @@
             <p>Real billed cost from your provider's export, including your discounts, attributed to the exact commit, and compared against the estimate.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="vs-budgets">
+      <div class="wrap">
+        <h2>Budgets tell you that you overspent. CostTrace tells you why.</h2>
+        <p class="sub">Cloud budgets and anomaly alerts work at the level of accounts and services. CostTrace works at the level of the change, and reports to the engineer who made it.</p>
+        <div class="table-scroll">
+          <table class="versus">
+            <thead><tr><th></th><th>AWS Budgets &amp; anomaly alerts</th><th>CostTrace</th></tr></thead>
+            <tbody>
+              <tr><td>Answers</td><td>"Are we over plan?"</td><td><strong>"Which change caused it?"</strong></td></tr>
+              <tr><td>Unit</td><td>Account, service, month</td><td><strong>Pull request, commit, deploy</strong></td></tr>
+              <tr><td>Reaches</td><td>Finance, by email</td><td><strong>The engineer, on the PR</strong></td></tr>
+              <tr><td>Estimate vs. actual</td><td>—</td><td><strong>Per change</strong></td></tr>
+              <tr><td>Clouds</td><td>One tool per provider</td><td><strong>AWS, Azure, GCP, OCI via FOCUS</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="sub" style="margin:16px 0 0">Use both: when a budget alert fires, CostTrace shows which deploys explain it.</p>
       </div>
     </section>
 
