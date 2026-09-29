@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CostTrace</title>
-<meta name="description" content="CostTrace traces measured cloud cost to the pull request that caused it. Open source, multi-cloud, built on the FinOps FOCUS standard.">
+<meta name="description" content="Estimators predict. Budgets alert. CostTrace measures what each pull request actually cost from your real cloud bill, including application code. Open source, multi-cloud, built on FOCUS.">
 <meta property="og:title" content="CostTrace: trace measured cloud cost to the change that caused it">
 <meta property="og:description" content="Estimates guess. CostTrace measures what each deploy actually costs from your real cloud bill, across AWS, Azure, GCP and OCI.">
 <meta property="og:url" content="https://costtrace.io/">
@@ -140,13 +140,24 @@
   td.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
   .pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
 
-  table.versus { background: var(--surface); min-width: 0; table-layout: fixed; }
-  table.versus th, table.versus td { white-space: normal; vertical-align: top; overflow-wrap: anywhere; }
-  table.versus th:first-child, table.versus td:first-child { width: 28%; }
-  @media (max-width: 480px) { table.versus { font-size: 13px; } table.versus th, table.versus td { padding: 8px; } }
-  table.versus td:first-child { color: var(--muted); font-size: 13px; }
-  table.versus td:last-child { color: var(--accent); }
-  table.versus strong { color: var(--text); }
+  .kicker { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .pillars.claims { margin-bottom: 20px; }
+  .pillars.claims .card { border-top: 3px solid var(--accent); }
+  table.matrix { background: var(--surface); min-width: 520px; table-layout: fixed; }
+  table.matrix th, table.matrix td { white-space: normal; text-align: center; vertical-align: middle; }
+  table.matrix thead th { font-size: 12px; line-height: 1.3; }
+  table.matrix tbody th { text-align: left; font-weight: 500; font-size: 14px; color: var(--text); text-transform: none; letter-spacing: normal; width: 34%; background: var(--surface); position: sticky; left: 0; z-index: 1; }
+  table.matrix thead th:first-child { position: sticky; left: 0; z-index: 2; background: var(--surface-2); width: 34%; }
+  table.matrix .ours { background: var(--accent-soft); }
+  table.matrix th.ours { text-transform: none; letter-spacing: normal; }
+  table.matrix thead th.ours { color: var(--accent); font-size: 13px; }
+  .yes { color: var(--ok); font-weight: 700; font-size: 17px; }
+  .part { color: var(--muted); font-size: 16px; }
+  .no { color: var(--muted); opacity: .6; }
+  td.ours .yes { color: var(--accent); }
+  .footnote { margin: 12px 0 0; font-size: 13px; color: var(--muted); max-width: 72ch; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (min-width: 720px) { .pillars.claims { grid-template-columns: repeat(3, 1fr); } }
 
   section { padding: 56px 0; border-top: 1px solid var(--border); }
   section h2 { font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -0.01em; margin: 0 0 10px; }
@@ -208,7 +219,7 @@
       CostTrace
     </a>
     <nav class="links" aria-label="Primary">
-      <a href="#vs-budgets">Why not budgets?</a>
+      <a href="#why">Why CostTrace</a>
       <a class="wide-only" href="#how">How it works</a>
       <a href="https://github.com/costtrace/costtrace">GitHub</a>
     </nav>
@@ -219,9 +230,9 @@
       <span class="eyebrow">Open source · Multi-cloud · FOCUS-native</span>
       <h1>Know what every deploy really costs.</h1>
       <p class="lede">
-        Cost estimates only see infrastructure diffs. CostTrace reads your actual cloud bill and traces
-        every change in spend back to the pull request that caused it, including changes from plain
-        application code, then checks it against the estimate.
+        Estimates only see infrastructure diffs, and budgets only see totals. CostTrace reads your
+        actual cloud bill and traces every change in spend back to the pull request that caused it,
+        including plain application code, then checks it against the estimate.
       </p>
       <div class="cta">
         <a class="btn primary" href="https://github.com/costtrace/costtrace"><svg class="gh" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
@@ -269,6 +280,33 @@
       </div>
     </section>
 
+    <section id="why">
+      <div class="wrap">
+        <p class="kicker">Why CostTrace</p>
+        <h2>Estimators predict. Budgets alert. CostTrace measures.</h2>
+        <p class="sub">Existing tools stop either before the merge or at the account level. None of them tell the engineer what their change actually cost. CostTrace connects your bill to the pull request.</p>
+        <div class="pillars claims">
+          <div class="card"><h3>Measured, not guessed</h3><p>What each change actually cost, read from your bill with your negotiated rates, not list-price estimates.</p></div>
+          <div class="card"><h3>Per pull request, even for code</h3><p>Cost is traced to the change that caused it, including changes with no infrastructure diff at all.</p></div>
+          <div class="card"><h3>Closes the loop</h3><p>Every estimate is checked against the actual, so teams learn where their estimates go wrong.</p></div>
+        </div>
+        <div class="table-scroll matrix-scroll">
+          <table class="matrix">
+            <thead><tr><th scope="col"><span class="sr">Capability</span></th><th scope="col" class="ours">CostTrace</th><th scope="col">Pre-merge estimators</th><th scope="col">Budgets &amp; anomaly alerts</th><th scope="col">FinOps platforms</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Measured from your actual bill, with your discounts</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="yes" aria-label="Yes">✓</span></td><td><span class="yes" aria-label="Yes">✓</span></td></tr>
+              <tr><th scope="row">Tied to the pull request that caused it</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="part" aria-label="Partly">◐</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="no" aria-label="Not the focus">—</span></td></tr>
+              <tr><th scope="row">Catches cost from application code</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="part" aria-label="Partly">◐</span></td><td><span class="part" aria-label="Partly">◐</span></td></tr>
+              <tr><th scope="row">Estimate vs. actual for every change</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="no" aria-label="Not the focus">—</span></td></tr>
+              <tr><th scope="row">Delivered to the engineer, on the PR</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="no" aria-label="Not the focus">—</span></td></tr>
+              <tr><th scope="row">One tool across AWS, Azure, Google Cloud, OCI</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="part" aria-label="Partly">◐</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="yes" aria-label="Yes">✓</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="footnote">✓ yes · ◐ partly · — not what it's built for. Compares typical capabilities of each category of tool as of September 2026; individual products vary. CostTrace works alongside them: when a budget alert fires, it shows which deploys explain it.</p>
+      </div>
+    </section>
+
     <section id="catches">
       <div class="wrap">
         <h2>What it catches</h2>
@@ -279,26 +317,6 @@
           <div class="card"><h3>Savings</h3><p>Deleted and downsized resources count as savings, so clean-up work gets the credit it earns.</p></div>
           <div class="card"><h3>Only real signals</h3><p>Every figure has a ± range from daily variation, noise isn't listed as impact, and back-to-back deploys are kept apart.</p></div>
         </div>
-      </div>
-    </section>
-
-    <section id="vs-budgets">
-      <div class="wrap">
-        <h2>Budgets tell you that you overspent. CostTrace tells you why.</h2>
-        <p class="sub">Cloud budgets and anomaly alerts work at the level of accounts and services. CostTrace works at the level of the change, and reports to the engineer who made it.</p>
-        <div class="table-scroll">
-          <table class="versus">
-            <thead><tr><th></th><th>AWS Budgets &amp; anomaly alerts</th><th>CostTrace</th></tr></thead>
-            <tbody>
-              <tr><td>Answers</td><td>"Are we over plan?"</td><td><strong>"Which change caused it?"</strong></td></tr>
-              <tr><td>Unit</td><td>Account, service, month</td><td><strong>Pull request, commit, deploy</strong></td></tr>
-              <tr><td>Reaches</td><td>Finance, by email</td><td><strong>The engineer, on the PR</strong></td></tr>
-              <tr><td>Estimate vs. actual</td><td>—</td><td><strong>Per change</strong></td></tr>
-              <tr><td>Clouds</td><td>One tool per provider</td><td><strong>AWS, Azure, GCP, OCI via FOCUS</strong></td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="sub" style="margin:16px 0 0">Use both: when a budget alert fires, CostTrace shows which deploys explain it.</p>
       </div>
     </section>
 
