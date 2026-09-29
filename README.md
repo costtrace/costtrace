@@ -111,19 +111,23 @@ npm run sample  # regenerate examples/sample
 
 ### Releasing
 
-Releases are published from GitHub Actions through npm trusted publishing. No npm token is involved,
-and every package gets provenance. To release:
+Releases are staged from GitHub Actions through npm trusted publishing, and go live only after a
+maintainer approves them with 2FA. No npm token is involved, and every package gets provenance. To
+release:
 
 1. Bump the `version` of all three packages (and the internal dependency versions) to the same
    number, then commit.
 2. Tag and push:
    ```bash
-   git tag v0.1.1
-   git push origin v0.1.1
+   git tag v0.1.2
+   git push origin v0.1.2
    ```
 
-The release workflow checks that the tag matches the package versions, runs the tests, and publishes.
-Release tags are protected, so they can't be moved or deleted once pushed.
+3. Approve the staged packages in order (`@costtrace/focus`, then `@costtrace/core`, then
+   `costtrace`) with `npm stage list <package>` and `npm stage approve <stage-id>`, or on npmjs.com.
+
+The release workflow checks that the tag matches the package versions, runs the tests, and stages
+the packages. Release tags are protected, so they can't be moved or deleted once pushed.
 
 ## License
 

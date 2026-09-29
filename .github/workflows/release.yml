@@ -1,8 +1,10 @@
 name: Release
 
-# Publishes all packages to npm when a version tag (v1.2.3) is pushed.
+# Stages all packages on npm when a version tag (v1.2.3) is pushed.
 # Uses npm trusted publishing (OIDC): no npm token is stored anywhere, and
 # npm attaches provenance linking each package to this workflow run.
+# Staged packages go live only after a maintainer approves them with 2FA,
+# so a compromised workflow or tag push alone cannot release anything.
 
 on:
   push:
@@ -48,7 +50,24 @@ jobs:
       - run: npm test
       - run: npm run build
 
-      # Dependencies first: the CLI depends on core, which depends on focus.
-      - run: npm publish -w @costtrace/focus --access public
-      - run: npm publish -w @costtrace/core --access public
-      - run: npm publish -w costtrace --access public
+      - run: npm stage publish -w @costtrace/focus --access public
+      - run: npm stage publish -w @costtrace/core --access public
+      - run: npm stage publish -w costtrace --access public
+
+      - name: Approval instructions
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          {
+            echo "## $TAG staged on npm — approval needed"
+            echo
+            echo "Approve **in this order** (the CLI depends on core, which depends on focus):"
+            echo
+            echo '```bash'
+            echo 'npm stage list @costtrace/focus    # then: npm stage approve <stage-id>'
+            echo 'npm stage list @costtrace/core'
+            echo 'npm stage list costtrace'
+            echo '```'
+            echo
+            echo "Or approve each package on npmjs.com."
+          } >> "$GITHUB_STEP_SUMMARY"
