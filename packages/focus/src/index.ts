@@ -1,7 +1,16 @@
 export type { CostMetric, FocusRow, ParseIssue, ParseResult } from './types.js';
-export { parseCsv } from './csv.js';
-export { parseFocusCsv, REQUIRED_COLUMNS } from './parse.js';
-export { loadFocusFile } from './load.js';
+export { CsvParser, parseCsv } from './csv.js';
+export {
+  createRowMapper,
+  FocusCsvStream,
+  parseFocusCsv,
+  parseTags,
+  REQUIRED_COLUMNS,
+  USED_COLUMNS,
+  type RowFilter,
+  type RowMapper,
+} from './parse.js';
+export { formatOf, loadFocus, loadFocusFile, type LoadOptions, type LoadResult } from './load.js';
 
 import type { CostMetric, FocusRow } from './types.js';
 

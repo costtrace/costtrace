@@ -38,6 +38,15 @@ export function buildTags(input: TagInput): Record<string, string> {
 }
 
 /**
+ * Whether a billing row can matter to attribution: it carries a CostTrace tag, or it has no
+ * ResourceId (reported as unattributable). Use it as a load filter so untagged rows of huge
+ * exports are never held in memory.
+ */
+export function isRelevantRow(row: { resourceId: string | null; tags: Record<string, string> }): boolean {
+  return row.resourceId === null || TAG_KEYS.sha in row.tags || TAG_KEYS.service in row.tags;
+}
+
+/**
  * Whether a tag value refers to the given commit. Short and full SHAs match
  * each other as long as the shorter one has at least 7 characters.
  */

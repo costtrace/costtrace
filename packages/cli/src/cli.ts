@@ -5,9 +5,12 @@ import { report, tags, UsageError, validate, type CommandResult } from './comman
 const HELP = `costtrace — trace measured cloud cost to the change that caused it
 
 Usage:
-  costtrace report   --focus <file.csv> --changes <changes.json> [options]
-  costtrace validate --focus <file.csv>
+  costtrace report   --focus <path> --changes <changes.json> [options]
+  costtrace validate --focus <path>
   costtrace tags     --sha <sha> [--pr <n>] [--repo <owner/name>] [--service <name>] [--format json|terraform|env]
+
+<path> is a FOCUS export file or a folder of them (searched recursively):
+  .csv, .csv.gz or .parquet, as exported by AWS, Azure, Google Cloud and OCI.
 
 Report options:
   --sha <sha>          Only report on this change

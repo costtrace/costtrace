@@ -2,12 +2,13 @@ import { readFile } from 'node:fs/promises';
 import {
   attributeChanges,
   buildTags,
+  isRelevantRow,
   parseChanges,
   reportToMarkdown,
   reportToText,
   type CostReport,
 } from '@costtrace/core';
-import { loadFocusFile, type CostMetric } from '@costtrace/focus';
+import { loadFocus, type CostMetric } from '@costtrace/focus';
 
 export interface CommandResult {
   output: string;
@@ -32,8 +33,8 @@ export async function report(args: ReportArgs): Promise<CommandResult> {
   const windowDays = args.window === undefined ? 7 : Number(args.window);
   if (!Number.isInteger(windowDays) || windowDays < 1) throw new UsageError('--window must be a positive integer');
 
-  const parsed = await loadFocusFile(args.focus);
-  if (parsed.rows.length === 0 && parsed.issues.length > 0) {
+  const parsed = await loadFocus(args.focus, { filter: isRelevantRow });
+  if (parsed.rowsRead === 0 && parsed.issues.length > 0) {
     throw new Error(`${args.focus} is not usable FOCUS data:\n${parsed.issues.map((i) => `  - ${i.message}`).join('\n')}`);
   }
 
@@ -65,13 +66,28 @@ function render(result: CostReport, format: string): string {
 }
 
 export async function validate(args: { focus: string }): Promise<CommandResult> {
-  const { rows, issues, columns } = await loadFocusFile(args.focus);
-  const lines = [`${args.focus}: ${rows.length} valid row(s), ${columns.length} column(s)`];
-  if (issues.length === 0) return { output: `${lines[0]} — OK`, exitCode: 0 };
+  // One pass that counts rows without keeping them, so validating a huge export stays within memory.
+  let tagged = 0;
+  const { rowsRead, issues, columns, files } = await loadFocus(args.focus, {
+    filter: (row) => {
+      if (row.resourceId !== null && isRelevantRow(row)) tagged++;
+      return false;
+    },
+  });
+  const where = files.length > 1 ? `${args.focus} (${files.length} files)` : args.focus;
+  const summary = `${where}: ${rowsRead} valid row(s), ${columns.length} column(s), ${tagged} row(s) with CostTrace tags`;
+  const lines = [issues.length === 0 ? `${summary} — OK` : summary];
+  if (tagged === 0 && rowsRead > 0) {
+    lines.push(
+      'No rows carry costtrace_sha or costtrace_service tags yet. Tag your deploys (`costtrace tags`) and activate the tags for cost allocation.',
+    );
+  }
+  if (issues.length === 0) return { output: lines.join('\n'), exitCode: 0 };
 
   lines.push(`${issues.length} issue(s):`);
   for (const issue of issues.slice(0, 50)) {
-    lines.push(`  ${issue.record === 0 ? 'header' : `record ${issue.record}`}${issue.column ? ` [${issue.column}]` : ''}: ${issue.message}`);
+    const at = `${issue.file ? `${issue.file} ` : ''}${issue.record === 0 ? 'header' : `record ${issue.record}`}`;
+    lines.push(`  ${at}${issue.column ? ` [${issue.column}]` : ''}: ${issue.message}`);
   }
   if (issues.length > 50) lines.push(`  …and ${issues.length - 50} more`);
   return { output: lines.join('\n'), exitCode: 1 };

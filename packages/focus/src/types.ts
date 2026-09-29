@@ -28,7 +28,9 @@ export interface FocusRow {
 }
 
 export interface ParseIssue {
-  /** 1-based data record number; 0 for problems with the header. */
+  /** Source file, when reading several files. */
+  file?: string;
+  /** 1-based data record number; 0 for problems with the header or the file itself. */
   record: number;
   column?: string;
   message: string;

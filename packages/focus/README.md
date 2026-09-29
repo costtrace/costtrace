@@ -11,18 +11,23 @@ npm install @costtrace/focus
 ```
 
 ```ts
-import { loadFocusFile, costOf } from '@costtrace/focus';
+import { loadFocus, costOf } from '@costtrace/focus';
 
-const { rows, issues } = await loadFocusFile('focus-export.csv');
+// A file or a folder of export files: .csv, .csv.gz or .parquet
+const { rows, issues } = await loadFocus('./exports');
 for (const issue of issues) console.warn(`record ${issue.record}: ${issue.message}`);
 
 const total = rows.reduce((sum, row) => sum + costOf(row, 'EffectiveCost'), 0);
 ```
 
-- `loadFocusFile(path)` / `parseFocusCsv(text)` return typed rows plus per-record validation
-  issues. Invalid rows are skipped, not thrown.
-- The `Tags` column is parsed from JSON.
+- `loadFocus(path, { filter })` reads a file or a folder (recursively): CSV, gzipped CSV and
+  Parquet (Snappy, Gzip, Zstd, Brotli), matching the native FOCUS exports of AWS, Azure, Google
+  Cloud and Oracle Cloud. It streams, reads only the columns it needs, and applies `filter` while
+  reading, so large exports don't have to fit in memory.
+- `parseFocusCsv(text)` parses CSV text. Both return typed rows plus per-record validation issues;
+  invalid rows are skipped, not thrown.
+- `Tags` is accepted as JSON text, a map or object, or `{key, value}` pairs.
+- Column names are matched case-insensitively. Extra provider columns (`x_*`) are ignored.
 - `ServiceProviderName` (FOCUS 1.3+) is read with a fallback to the deprecated `ProviderName`.
-- CSV only for now; Parquet is planned.
 
 Licensed under Apache-2.0.

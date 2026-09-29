@@ -1,6 +1,11 @@
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFocusCsv } from '@costtrace/focus';
 import { describe, expect, it } from 'vitest';
-import { report, tags } from '../src/commands.js';
+import { writeExportFolder } from '../../focus/test/fixtures.js';
+import { report, tags, validate } from '../src/commands.js';
 
 const sample = (file: string) => fileURLToPath(new URL(`../../../examples/sample/${file}`, import.meta.url));
 const args = { focus: sample('focus-sample.csv'), changes: sample('changes.json') };
@@ -42,6 +47,24 @@ describe('costtrace on the sample dataset', () => {
 
     const ok = await report({ ...args, sha: '3b7e91c', failOnOver: true });
     expect(ok.exitCode).toBe(0);
+  });
+
+  it('gives identical results from a folder of Parquet and gzipped CSV exports', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'costtrace-cli-'));
+    try {
+      const { rows } = parseFocusCsv(await readFile(args.focus, 'utf8'));
+      await writeExportFolder(join(dir, 'exports'), rows);
+
+      const fromCsv = await report({ ...args, format: 'json' });
+      const fromFolder = await report({ ...args, focus: join(dir, 'exports'), format: 'json' });
+      expect(JSON.parse(fromFolder.output)).toEqual(JSON.parse(fromCsv.output));
+
+      const check = await validate({ focus: join(dir, 'exports') });
+      expect(check.exitCode).toBe(0);
+      expect(check.output).toMatch(/\(3 files\): 250 valid row\(s\).*— OK/);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it('prints IaC tags', () => {

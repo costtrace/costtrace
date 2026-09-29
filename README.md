@@ -97,19 +97,30 @@ This is a JSON array of deploys, typically written by your CD pipeline:
 
 ## Getting FOCUS data
 
-| Provider | Export |
-|---|---|
-| AWS | Billing and Cost Management → Data Exports → FOCUS |
-| Azure | Cost Management → Exports → FOCUS cost and usage |
-| Oracle Cloud | Cost reports (FOCUS format) |
-| Google Cloud | Not yet native. A BigQuery billing export → FOCUS adapter is on the roadmap. |
+Every major cloud exports FOCUS natively. Point `--focus` at a single export file or at a whole
+folder of them. Folders are searched recursively, and CSV, gzipped CSV and Parquet (Snappy, Gzip,
+Zstd, Brotli) are all read directly.
+
+| Provider | Native FOCUS export | Get it locally |
+|---|---|---|
+| AWS | Billing and Cost Management → Data Exports → FOCUS, to S3 (Parquet or CSV) | `aws s3 sync s3://<bucket>/<prefix> ./exports` |
+| Azure | Cost Management → Exports → FOCUS cost and usage, to Blob Storage (CSV or Parquet) | `azcopy copy '<container-url>' ./exports --recursive` |
+| Google Cloud | FOCUS export to BigQuery (`gcp_billing_export_focus_<account>`) | Export the table to Cloud Storage as Parquet, then `gcloud storage cp -r gs://<bucket>/<path> ./exports` |
+| Oracle Cloud | FOCUS cost reports in Object Storage (gzipped CSV) | `oci os object bulk-download --namespace bling --bucket-name <tenancy-ocid> --prefix FOCUS --download-dir ./exports` |
+
+```bash
+costtrace report --focus ./exports --changes changes.json
+```
+
+CostTrace streams exports and keeps only rows that carry CostTrace tags. A 2-million-row export
+(460 MB uncompressed) is processed in about 5 seconds with about 125 MB of memory.
 
 Activate the `costtrace_*` tags as **cost allocation tags** in your billing console. Otherwise they
-won't appear in exports.
+won't appear in exports. Direct connectors for S3, Blob Storage and BigQuery, which skip the local
+copy, are on the roadmap.
 
 ## Limitations
 
-- **CSV only.** Parquet support is planned.
 - **Tagged resources only.** Resources must carry the `costtrace_*` tags (the SHA tag for direct
   attribution, the service tag for service-level attribution). Shared or untaggable costs are
   reported as unattributable.
@@ -121,10 +132,9 @@ won't appear in exports.
 
 ## Roadmap
 
-- Provider adapters: AWS Data Exports (S3/Athena), Azure exports, GCP BigQuery → FOCUS
+- Direct connectors: S3 (AWS), Blob Storage (Azure), BigQuery (Google Cloud), Object Storage (OCI)
 - Estimator adapter: Infracost
 - GitHub Action: post and update the PR comment after deploy
-- Parquet input, DuckDB-backed storage for large exports
 - Dashboard: cost per change, service and team over time
 
 ## Development
