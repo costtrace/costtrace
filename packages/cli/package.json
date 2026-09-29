@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "costtrace": "./dist/cli.js"
+    "costtrace": "dist/cli.js"
   },
   "files": [
     "dist",
