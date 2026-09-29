@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CostTrace</title>
+<meta name="description" content="CostTrace traces measured cloud cost to the pull request that caused it. Open source, multi-cloud, built on the FinOps FOCUS standard.">
+<meta property="og:title" content="CostTrace: trace measured cloud cost to the change that caused it">
+<meta property="og:description" content="Estimates guess. CostTrace measures what each deploy actually costs from your real cloud bill, across AWS, Azure, GCP and OCI.">
+<meta property="og:url" content="https://costtrace.io/">
+<meta name="theme-color" content="#0f766e">
+<link rel="canonical" href="https://costtrace.io/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f766e'/%3E%3Cpath d='M8 21l5-6 4 3 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #fbfbf9;
+    --surface: #ffffff;
+    --surface-2: #f2f3ef;
+    --text: #17201d;
+    --muted: #5b6662;
+    --border: #e2e4de;
+    --accent: #0f766e;
+    --accent-ink: #ffffff;
+    --accent-soft: #e3f2ef;
+    --warn: #b45309;
+    --warn-soft: #fdf1e3;
+    --ok: #15803d;
+    --code-bg: #14201c;
+    --code-text: #e6ece9;
+    --code-muted: #8fa39b;
+    --radius: 12px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1412;
+      --surface: #151d1a;
+      --surface-2: #1b2521;
+      --text: #e8eeeb;
+      --muted: #9aa8a2;
+      --border: #26332e;
+      --accent: #2dd4bf;
+      --accent-ink: #062520;
+      --accent-soft: #123530;
+      --warn: #fbbf24;
+      --warn-soft: #2e2410;
+      --ok: #4ade80;
+      --code-bg: #0a0f0d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1412;
+    --surface: #151d1a;
+    --surface-2: #1b2521;
+    --text: #e8eeeb;
+    --muted: #9aa8a2;
+    --border: #26332e;
+    --accent: #2dd4bf;
+    --accent-ink: #062520;
+    --accent-soft: #123530;
+    --warn: #fbbf24;
+    --warn-soft: #2e2410;
+    --ok: #4ade80;
+    --code-bg: #0a0f0d;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 var(--sans);
+  }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 20px; padding-bottom: 20px; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
+  .brand svg { flex: none; }
+  nav.links { display: flex; gap: 18px; font-size: 15px; }
+  nav.links a { color: var(--muted); text-decoration: none; }
+  nav.links a:hover { color: var(--text); }
+
+  .hero { padding-top: 48px; padding-bottom: 32px; }
+  @media (min-width: 720px) { .hero { padding-top: 80px; padding-bottom: 48px; } }
+  .eyebrow {
+    display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: .02em;
+    color: var(--accent); background: var(--accent-soft); padding: 4px 10px; border-radius: 999px;
+  }
+  h1 {
+    font-size: clamp(32px, 6vw, 56px); line-height: 1.08; letter-spacing: -0.02em;
+    margin: 18px 0 16px; max-width: 16ch;
+  }
+  .lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); max-width: 60ch; margin: 0 0 28px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 10px;
+    font-weight: 600; text-decoration: none; font-size: 15px; border: 1px solid var(--border);
+    color: var(--text); background: var(--surface);
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .install {
+    font-family: var(--mono); font-size: 14px; background: var(--surface-2); border: 1px solid var(--border);
+    padding: 10px 14px; border-radius: 10px; color: var(--text); overflow-x: auto; white-space: nowrap; max-width: 100%;
+  }
+
+  /* PR comment mock */
+  .comment {
+    margin: 40px 0 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04);
+  }
+  .comment-head {
+    display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface-2); font-size: 14px; color: var(--muted);
+  }
+  .avatar { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); flex: none; }
+  .comment-body { padding: 18px 16px 20px; }
+  @media (min-width: 720px) { .comment-body { padding: 22px 24px 24px; } }
+  .comment-body h3 { margin: 0 0 4px; font-size: 17px; }
+  .meta { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .meta code { font-family: var(--mono); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+  .figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .fig { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+  .fig .label { font-size: 12px; color: var(--muted); }
+  .fig .num { font-family: var(--mono); font-weight: 700; font-size: clamp(15px, 3.4vw, 22px); font-variant-numeric: tabular-nums; }
+  .fig.warn { background: var(--warn-soft); border-color: transparent; }
+  .fig.warn .num { color: var(--warn); }
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 520px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; background: var(--surface-2); }
+  tr:last-child td { border-bottom: 0; }
+  td.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+
+  section { padding: 56px 0; border-top: 1px solid var(--border); }
+  section h2 { font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -0.01em; margin: 0 0 10px; }
+  section > .wrap > p.sub { color: var(--muted); margin: 0 0 28px; max-width: 62ch; }
+
+  .compare { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .compare { grid-template-columns: 1fr 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .card h3 { margin: 0 0 8px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); }
+  .card.accent { border-color: var(--accent); }
+
+  ol.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; grid-template-columns: 1fr; counter-reset: s; }
+  @media (min-width: 720px) { ol.steps { grid-template-columns: repeat(4, 1fr); } }
+  ol.steps li { counter-increment: s; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  ol.steps li::before {
+    content: counter(s); display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; margin-bottom: 10px;
+  }
+  ol.steps h3 { margin: 0 0 6px; font-size: 16px; }
+  ol.steps p { margin: 0; color: var(--muted); font-size: 15px; }
+  ol.steps code { font-family: var(--mono); font-size: 13px; }
+
+  .clouds { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .cloud { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 10px 14px; font-weight: 600; font-size: 15px; }
+  .cloud small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+
+  pre.term {
+    background: var(--code-bg); color: var(--code-text); border-radius: var(--radius); padding: 18px 20px;
+    font: 13.5px/1.65 var(--mono); overflow-x: auto; margin: 0;
+  }
+  pre.term .c { color: var(--code-muted); }
+  pre.term .p { color: #5eead4; }
+
+  .pillars { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .pillars { grid-template-columns: repeat(3, 1fr); } }
+
+  footer { border-top: 1px solid var(--border); padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+  <header class="wrap top">
+    <a class="brand" href="/" aria-label="CostTrace home">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="var(--accent)"/><path d="M8 21l5-6 4 3 7-9" stroke="var(--accent-ink)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      CostTrace
+    </a>
+    <nav class="links" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="https://github.com/costtrace/costtrace">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="wrap hero">
+      <span class="eyebrow">Open source · Multi-cloud · FOCUS-native</span>
+      <h1>Know what every deploy really costs.</h1>
+      <p class="lede">
+        Cost estimates are guesses. CostTrace reads your actual cloud bill and traces the change in
+        spend back to the pull request that caused it, then checks it against the estimate.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/costtrace/costtrace">Get started on GitHub</a>
+        <code class="install">npx costtrace --help</code>
+      </div>
+
+      <figure class="comment" aria-label="Example CostTrace pull request comment">
+        <div class="comment-head"><span class="avatar" aria-hidden="true"></span><strong>costtrace</strong> commented 7 days after deploy</div>
+        <div class="comment-body">
+          <h3>🧾 PR #101: Route payment provider calls through a NAT gateway</h3>
+          <div class="meta"><code>9f1c2ab</code> · checkout · deployed 2026-09-08 14:00 UTC</div>
+          <div class="figures">
+            <div class="fig"><div class="label">Estimated</div><div class="num">+$310</div></div>
+            <div class="fig"><div class="label">Measured</div><div class="num">+$1,376</div></div>
+            <div class="fig warn"><div class="label">vs. estimate</div><div class="num">4.4×</div></div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Resource</th><th>Provider</th><th>Change</th><th style="text-align:right">After / day</th><th style="text-align:right">Monthly impact</th></tr></thead>
+              <tbody>
+                <tr><td>checkout-egress-nat</td><td>AWS · VPC</td><td><span class="pill">added</span></td><td class="num">$44.02</td><td class="num">+$1,338.96</td></tr>
+                <tr><td>checkout-egress-logs</td><td>AWS · CloudWatch</td><td><span class="pill">added</span></td><td class="num">$1.21</td><td class="num">+$36.81</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </figure>
+    </div>
+
+    <section>
+      <div class="wrap">
+        <h2>Estimates stop at merge. Your bill doesn't.</h2>
+        <p class="sub">Pre-merge tools price what they can see in your infrastructure code. Data processing, traffic, logs and discounts only show up after the change is running.</p>
+        <div class="compare">
+          <div class="card">
+            <h3>Pre-merge estimate</h3>
+            <p>List prices for resources declared in your infrastructure code. Useful, but it misses usage-driven charges and your negotiated rates.</p>
+          </div>
+          <div class="card accent">
+            <h3>CostTrace measurement</h3>
+            <p>Real billed cost from your provider's export, including your discounts, attributed to the exact commit, and compared against the estimate.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="wrap">
+        <h2>How it works</h2>
+        <p class="sub">No agents and no SaaS account. CostTrace runs in your CI or on your laptop against your own billing export.</p>
+        <ol class="steps">
+          <li><h3>Tag</h3><p>Deploys stamp resources with <code>costtrace_sha</code>, <code>_pr</code>, <code>_repo</code> and <code>_service</code>. One convention that's valid on every cloud.</p></li>
+          <li><h3>Measure</h3><p>CostTrace reads your FOCUS billing export and compares each touched resource before vs. after the deploy.</p></li>
+          <li><h3>Attribute</h3><p>Added resources count in full, changed ones by their difference, and removed ones as savings.</p></li>
+          <li><h3>Report</h3><p>Post a PR comment, print a table, export JSON, or fail CI when a change blows past its estimate.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>One tool, every cloud</h2>
+        <p class="sub">CostTrace is built on <a href="https://focus.finops.org">FOCUS</a>, the FinOps Foundation's open billing standard, so the same engine works across providers.</p>
+        <div class="clouds">
+          <div class="cloud">AWS<small>Data Exports (FOCUS)</small></div>
+          <div class="cloud">Microsoft Azure<small>Cost Management exports</small></div>
+          <div class="cloud">Oracle Cloud<small>FOCUS cost reports</small></div>
+          <div class="cloud">Google Cloud<small>via BigQuery adapter (roadmap)</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>Try it in a minute</h2>
+        <p class="sub">The repository ships with a multi-cloud sample dataset, so you don't need cloud access to see it work.</p>
+<pre class="term"><span class="c"># measure every change in a deploy log</span>
+<span class="p">$</span> npx costtrace report --focus focus-export.csv --changes changes.json
+
+<span class="c"># a PR comment for one change; fail CI if it's over estimate</span>
+<span class="p">$</span> npx costtrace report --focus focus-export.csv --changes changes.json \
+    --sha 9f1c2ab --format markdown --fail-on-over
+
+<span class="c"># the tags your IaC should apply</span>
+<span class="p">$</span> npx costtrace tags --sha "$GITHUB_SHA" --pr 101 --service checkout --format terraform</pre>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>Built to be trusted with your bill</h2>
+        <div class="pillars">
+          <div class="card"><h3>Runs where you do</h3><p>Local-first. Your billing data never leaves your machine or CI.</p></div>
+          <div class="card"><h3>Open source</h3><p>Apache-2.0 licensed, from the attribution engine to the CLI.</p></div>
+          <div class="card"><h3>Verifiable releases</h3><p>Every npm package ships with signed build provenance from GitHub Actions.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© 2026 CostTrace contributors · Apache-2.0</span>
+      <span>
+        <a href="https://github.com/costtrace/costtrace">GitHub</a> ·
+        <a href="https://www.npmjs.com/package/costtrace">npm</a> ·
+        <a href="https://github.com/costtrace/costtrace/security/policy">Security</a>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>
