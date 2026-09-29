@@ -1,0 +1,29 @@
+[
+  {
+    "sha": "9f1c2ab7d3e4",
+    "pr": 101,
+    "repo": "acme/checkout",
+    "service": "checkout",
+    "title": "Route payment provider calls through a NAT gateway",
+    "deployedAt": "2026-09-08T14:00:00Z",
+    "estimateMonthly": 310
+  },
+  {
+    "sha": "3b7e91c04fa2",
+    "pr": 102,
+    "repo": "acme/search",
+    "service": "search",
+    "title": "Upsize search indexer to n2-standard-8",
+    "deployedAt": "2026-09-10T09:30:00Z",
+    "estimateMonthly": 450
+  },
+  {
+    "sha": "c05d8e2f61b9",
+    "pr": 103,
+    "repo": "acme/reports",
+    "service": "reports",
+    "title": "Drop legacy report archive storage",
+    "deployedAt": "2026-09-12T17:00:00Z",
+    "estimateMonthly": -240
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "name": "costtrace",
+  "version": "0.1.0",
+  "description": "Trace measured cloud cost to the change that caused it.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "costtrace": "./dist/cli.js"
+  },
+  "files": ["dist"],
+  "dependencies": {
+    "@costtrace/core": "0.1.0",
+    "@costtrace/focus": "0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/costtrace/costtrace.git",
+    "directory": "packages/cli"
+  },
+  "keywords": ["finops", "focus", "cloud-cost", "cost-attribution", "cli"]
+}

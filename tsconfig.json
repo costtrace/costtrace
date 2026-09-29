@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/focus" },
+    { "path": "packages/core" },
+    { "path": "packages/cli" }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "costtrace-monorepo",
+  "private": true,
+  "description": "Trace measured cloud cost to the change that caused it.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "workspaces": [
+    "packages/focus",
+    "packages/core",
+    "packages/cli"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test",
+    "sample": "node examples/sample/generate.ts",
+    "demo": "npm run build && node packages/cli/dist/cli.js report --focus examples/sample/focus-sample.csv --changes examples/sample/changes.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}
