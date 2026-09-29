@@ -19,7 +19,7 @@
     "demo": "npm run build && node packages/cli/dist/cli.js report --focus examples/sample/focus-sample.csv --changes examples/sample/changes.json"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.12"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
