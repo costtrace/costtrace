@@ -287,7 +287,7 @@
         <ol class="steps">
           <li><h3>Tag</h3><p>Deploys stamp resources with <code>costtrace_sha</code>, <code>_pr</code>, <code>_repo</code> and <code>_service</code>. One convention that's valid on every cloud.</p></li>
           <li><h3>Measure</h3><p>CostTrace reads your FOCUS billing export and compares each touched resource before vs. after the deploy.</p></li>
-          <li><h3>Attribute</h3><p>Added resources count in full, changed ones by their difference, and removed ones as savings.</p></li>
+          <li><h3>Attribute</h3><p>New, changed and removed resources, plus cost shifts from application code in the same service, each with a ± range.</p></li>
           <li><h3>Report</h3><p>Post a PR comment, print a table, export JSON, or fail CI when a change blows past its estimate.</p></li>
         </ol>
       </div>

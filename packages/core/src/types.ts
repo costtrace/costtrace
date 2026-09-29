@@ -6,7 +6,10 @@ export interface Change {
   deployedAt: Date;
   pr?: number;
   repo?: string;
-  /** Matches the `costtrace_service` tag; enables detection of removed resources. */
+  /**
+   * Matches the `costtrace_service` tag. Enables service-level attribution: removed resources and
+   * cost shifts on unmodified resources of the service (e.g. from application code).
+   */
   service?: string;
   title?: string;
   /** Pre-merge monthly estimate (e.g. from Infracost), in the billing currency. */
@@ -26,7 +29,13 @@ export interface AttributionOptions {
   minFlagAmount?: number;
 }
 
-export type ResourceStatus = 'added' | 'changed' | 'removed';
+/**
+ * - added / changed: resources carrying this change's SHA tag
+ * - removed: resources of the change's service that stopped billing at the deploy
+ * - affected: unmodified resources of the change's service whose cost moved after the deploy
+ *   (typically application code or configuration)
+ */
+export type ResourceStatus = 'added' | 'changed' | 'removed' | 'affected';
 
 export interface ResourceImpact {
   resourceId: string;
@@ -40,6 +49,10 @@ export interface ResourceImpact {
   deltaMonthly: number;
   /** Days of post-deploy data used for this resource (fewer if a later change re-tagged it). */
   afterDays: number;
+  /** Standard error of deltaMonthly, from day-to-day variation. */
+  standardErrorMonthly: number;
+  /** False for `affected` resources whose change is within normal daily noise. */
+  significant: boolean;
 }
 
 export type MeasurementStatus = 'pending' | 'partial' | 'complete';
@@ -60,7 +73,11 @@ export interface ChangeCost {
   afterDays: number;
   /** Net monthly cost impact measured from billing data; null until post-deploy data exists. */
   measuredDeltaMonthly: number | null;
-  /** Monthly run-rate of everything this change touched, after deploy. */
+  /** ≈95% range (±) around measuredDeltaMonthly from day-to-day cost variation. */
+  uncertaintyMonthly: number | null;
+  /** Measured delta split into resources the change touched vs. unmodified service resources. */
+  breakdown: { infrastructureMonthly: number; serviceMonthly: number } | null;
+  /** Monthly run-rate after the deploy of every resource in `resources`. */
   runRateMonthly: number | null;
   resources: ResourceImpact[];
   estimate: EstimateComparison | null;

@@ -20,6 +20,20 @@ describe('costtrace on the sample dataset', () => {
     expect(byPr[103].resources.map((r: any) => r.status).sort()).toEqual(['changed', 'removed']);
   });
 
+  it('catches an application-only change that a pre-merge estimate prices at $0', async () => {
+    const result = JSON.parse((await report({ ...args, sha: '7d24e0c', format: 'json' })).output);
+    const [pr104] = result.changes;
+    const significant = pr104.resources.filter((r: any) => r.significant);
+
+    expect(pr104.estimate.verdict).toBe('over');
+    expect(pr104.measuredDeltaMonthly).toBeGreaterThan(500);
+    expect(significant.map((r: any) => [r.resourceName, r.status])).toEqual([['orders-db', 'affected']]);
+
+    const md = await report({ ...args, sha: '7d24e0c', format: 'markdown' });
+    expect(md.output).toContain('Service-level (code, config)');
+    expect(md.output).toMatch(/\*\*\+\$579\.\d\d\*\* ± \$\d+/);
+  });
+
   it('renders a PR comment and gates on overruns', async () => {
     const md = await report({ ...args, sha: '9f1c2ab', format: 'markdown', failOnOver: true });
     expect(md.exitCode).toBe(1);

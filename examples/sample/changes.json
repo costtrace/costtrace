@@ -25,5 +25,14 @@
     "title": "Drop legacy report archive storage",
     "deployedAt": "2026-09-12T17:00:00Z",
     "estimateMonthly": -240
+  },
+  {
+    "sha": "7d24e0c9b1a3",
+    "pr": 104,
+    "repo": "acme/checkout",
+    "service": "checkout",
+    "title": "Load order line items individually in invoice view",
+    "deployedAt": "2026-09-18T11:00:00Z",
+    "estimateMonthly": 0
   }
 ]

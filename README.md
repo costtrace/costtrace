@@ -7,8 +7,11 @@ ships, it reads your real cloud bill, attributes cost to the exact commit and PR
 compares the result with the estimate.
 
 ```
-PR #101  9f1c2ab  checkout  estimate +$310.00/mo  measured +$1,375.76/mo  over estimate (4.4×)
-  added  +$1,338.96/mo  checkout-egress-nat (AWS Amazon VPC)
+PR #101  checkout  estimate +$310/mo  measured +$1,368 ± $42/mo  over estimate (4.4×)
+  added     +$1,338.96/mo  checkout-egress-nat (AWS Amazon VPC)
+
+PR #104  checkout  estimate    $0/mo  measured   +$579 ± $52/mo  over estimate
+  affected    +$578.92/mo  orders-db (AWS Amazon RDS)     ← app-only change: an N+1 query
 ```
 
 It works with any cloud, because it reads the vendor-neutral
@@ -40,6 +43,13 @@ The two work well together: when a budget alert fires, CostTrace shows which dep
    - **Added** resources: new cost.
    - **Changed** resources: only the difference.
    - **Removed** resources (inferred from the service tag): the savings.
+   - **Affected** resources: resources of the deployed service that the change didn't modify, but
+     whose cost moved after the deploy. This catches **application-code changes**, such as an N+1
+     query raising the database bill, which no infrastructure diff or pre-merge estimate can see.
+     Shifts within normal daily variation are counted in the total but not listed.
+
+   Every result comes with a **± range** based on day-to-day cost variation, so noise isn't
+   mistaken for impact.
 4. **Report.** You get a terminal table, a PR-comment markdown, or JSON. `--fail-on-over` fails CI when
    the measured cost exceeds the estimate.
 
@@ -97,13 +107,15 @@ This is a JSON array of deploys, typically written by your CD pipeline:
 Activate the `costtrace_*` tags as **cost allocation tags** in your billing console. Otherwise they
 won't appear in exports.
 
-## Limitations (v0.1)
+## Limitations
 
 - **CSV only.** Parquet support is planned.
-- **Usage-based only.** Only resources that carry the tags, or that stopped billing within a tagged
-  service, are attributed. Shared or untaggable costs are reported as unattributable.
-- **Noisy before/after comparisons.** Traffic swings or other deploys to the same service within the
-  window add noise. CostTrace flags overlapping deploys but does not separate their effects.
+- **Tagged resources only.** Resources must carry the `costtrace_*` tags (the SHA tag for direct
+  attribution, the service tag for service-level attribution). Shared or untaggable costs are
+  reported as unattributable.
+- **Before/after, not causal inference.** Service-level impact includes anything that moved the
+  service's cost in the window, including organic traffic growth. Deploys to the same service are
+  kept apart by measuring only between them, but two deploys on the same day can't be separated.
 - **Billing lag.** Billing exports lag by hours to a day, so a change stays `pending` until data after
   its deploy day arrives.
 

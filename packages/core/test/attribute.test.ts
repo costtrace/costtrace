@@ -169,6 +169,78 @@ describe('attributeChanges', () => {
   });
 });
 
+describe('service-level attribution', () => {
+  // Deterministic ±2% wobble so resources have realistic day-to-day noise.
+  const wobble = (base: number) => (d: number) => base * (1 + 0.02 * Math.sin(d * 1.7));
+
+  it('attributes cost shifts on unmodified service resources to the deploy', () => {
+    // An app-only change: no resource is re-tagged, but the database bill rises.
+    const rows = [
+      ...series(0, 20, 'db', (d) => (d < 10 ? wobble(50)(d) : wobble(70)(d)), () => OLD),
+      ...series(0, 20, 'cache', wobble(10), () => OLD),
+    ];
+    const [result] = attributeChanges(rows, [change('app2222', 10, { service: 'api', estimateMonthly: 0 })]).changes;
+
+    const db = result!.resources.find((r) => r.resourceId === 'db')!;
+    expect(db).toMatchObject({ status: 'affected', significant: true });
+    expect(db.deltaMonthly).toBeCloseTo(20 * DAYS_PER_MONTH, -1);
+    expect(result!.resources.find((r) => r.resourceId === 'cache')!.significant).toBe(false);
+    expect(result!.breakdown!.infrastructureMonthly).toBe(0);
+    expect(result!.breakdown!.serviceMonthly).toBeCloseTo(result!.measuredDeltaMonthly!);
+    expect(result!.estimate!.verdict).toBe('over');
+    expect(result!.notes.join()).toMatch(/changed cost without being modified/);
+  });
+
+  it('only considers resources of the change’s own service', () => {
+    const rows = series(0, 20, 'db', (d) => (d < 10 ? 50 : 70), () => ({ costtrace_sha: 'old0000', costtrace_service: 'billing' }));
+    const [result] = attributeChanges(rows, [change('app2222', 10, { service: 'api' })]).changes;
+    expect(result!.resources).toEqual([]);
+    expect(result!.notes.join()).toMatch(/No significant cost change found/);
+  });
+
+  it('does no service-level attribution without a service', () => {
+    const rows = series(0, 20, 'db', (d) => (d < 10 ? 50 : 70), () => OLD);
+    const [result] = attributeChanges(rows, [change('app2222', 10)]).changes;
+    expect(result!.resources).toEqual([]);
+  });
+
+  it('keeps small or noisy shifts in the total but marks them not significant', () => {
+    // +3% on a steady resource: real, but below the 5% materiality bar.
+    const rows = series(0, 20, 'db', (d) => (d < 10 ? 100 : 103), () => OLD);
+    const [result] = attributeChanges(rows, [change('app2222', 10, { service: 'api' })]).changes;
+    expect(result!.resources[0]).toMatchObject({ status: 'affected', significant: false });
+    expect(result!.measuredDeltaMonthly).toBeCloseTo(3 * DAYS_PER_MONTH);
+  });
+
+  it('bounds service windows by neighbouring deploys of the same service', () => {
+    // Cost steps up at each of two deploys; each deploy should get only its own step.
+    const rows = series(0, 30, 'db', (d) => (d < 10 ? 50 : d < 14 ? 60 : 90), () => OLD);
+    const report = attributeChanges(rows, [change('first11', 10, { service: 'api' }), change('second2', 14, { service: 'api' })]);
+    const [first, second] = report.changes;
+
+    expect(first!.resources[0]).toMatchObject({ beforeDaily: 50, afterDaily: 60, afterDays: 3 });
+    expect(second!.resources[0]).toMatchObject({ beforeDaily: 60, afterDaily: 90 });
+    expect(second!.notes.join()).toMatch(/measured only between the two deploys/);
+  });
+
+  it('reports an uncertainty range and widens the estimate tolerance by it', () => {
+    const noisy = (d: number) => (d < 10 ? 100 : 130) + (d % 2 === 0 ? 15 : -15);
+    const rows = series(0, 20, 'db', noisy, () => OLD);
+    const [result] = attributeChanges(rows, [change('app2222', 10, { service: 'api', estimateMonthly: 800 })]).changes;
+
+    expect(result!.uncertaintyMonthly!).toBeGreaterThan(300);
+    // Measured ≈ $913 vs. $800: inside the ± range, so not flagged.
+    expect(result!.estimate!.verdict).toBe('within');
+  });
+
+  it('does not double-count resources the change re-tagged', () => {
+    const rows = series(0, 20, 'vm', (d) => (d < 10 ? 10 : 25), (d) => (d < 10 ? OLD : NEW));
+    const [result] = attributeChanges(rows, [change('new1111', 10, { service: 'api' })]).changes;
+    expect(result!.resources).toHaveLength(1);
+    expect(result!.resources[0]!.status).toBe('changed');
+  });
+});
+
 describe('parseChanges', () => {
   it('normalizes valid changes', () => {
     const [c] = parseChanges([{ sha: ' abc1234 ', deployedAt: '2026-09-08T14:00:00Z', pr: '12', service: 'api', estimateMonthly: 5 }]);

@@ -10,6 +10,8 @@ import type {
 } from './types.js';
 
 export const DAYS_PER_MONTH = 365 / 12;
+const SIGNIFICANCE_Z = 3;
+const MATERIALITY = 0.05;
 const DAY_MS = 86_400_000;
 
 const dayOf = (d: Date) => Math.floor(d.getTime() / DAY_MS);
@@ -116,20 +118,36 @@ function buildIndex(rows: FocusRow[], metric: CostMetric, categories: Set<string
 
 const hasSha = (shas: Set<string>, sha: string) => [...shas].some((s) => shaMatches(s, sha));
 
-function sumDays(history: ResourceHistory, from: number, to: number): number {
-  let sum = 0;
-  for (let day = from; day <= to; day++) sum += history.days.get(day)?.cost ?? 0;
-  return sum;
+interface WindowStats {
+  mean: number;
+  /** Sample variance of the daily cost; days without charges count as zero. */
+  variance: number;
+  days: number;
 }
+
+function windowStats(history: ResourceHistory, from: number, to: number): WindowStats {
+  const values: number[] = [];
+  for (let day = from; day <= to; day++) values.push(history.days.get(day)?.cost ?? 0);
+  const days = values.length;
+  if (days === 0) return { mean: 0, variance: 0, days: 0 };
+  const mean = values.reduce((a, b) => a + b, 0) / days;
+  const variance = days > 1 ? values.reduce((a, v) => a + (v - mean) ** 2, 0) / (days - 1) : 0;
+  return { mean, variance, days };
+}
+
+/** Standard error of (after mean − before mean), in cost per day. */
+const standardError = (before: WindowStats, after: WindowStats) =>
+  Math.sqrt((before.days > 0 ? before.variance / before.days : 0) + (after.days > 0 ? after.variance / after.days : 0));
 
 function compareEstimate(
   measured: number,
   estimate: number,
+  uncertainty: number,
   tolerance: number,
   minFlagAmount: number,
 ): EstimateComparison {
   const variance = measured - estimate;
-  const threshold = Math.max(minFlagAmount, Math.abs(estimate) * (tolerance - 1));
+  const threshold = Math.max(minFlagAmount, Math.abs(estimate) * (tolerance - 1), uncertainty);
   return {
     estimateMonthly: estimate,
     varianceMonthly: variance,
@@ -157,12 +175,22 @@ function attributeOne(
   const afterDays = Math.max(0, afterEnd - afterStart + 1);
 
   const serviceTag = change.service ? sanitizeTagValue(change.service) : null;
+
+  // Other deploys of the same service bound the service-level windows, so one deploy's effect
+  // isn't credited to its neighbour.
+  let prevServiceDay = -Infinity;
+  let nextServiceDay = Infinity;
   if (serviceTag !== null) {
     for (const other of allChanges) {
       if (other === change || !other.service || sanitizeTagValue(other.service) !== serviceTag) continue;
-      if (Math.abs(dayOf(other.deployedAt) - deployDay) <= W) {
-        notes.push(`${describe(other)} deployed to the same service within the window; its effect may overlap.`);
+      const day = dayOf(other.deployedAt);
+      if (day === deployDay) {
+        notes.push(`${describe(other)} deployed to the same service on the same day; their effects can't be separated.`);
+      } else if (Math.abs(day - deployDay) <= W) {
+        notes.push(`${describe(other)} deployed to the same service within the window; service-level impact is measured only between the two deploys.`);
       }
+      if (day < deployDay) prevServiceDay = Math.max(prevServiceDay, day);
+      if (day > deployDay) nextServiceDay = Math.min(nextServiceDay, day);
     }
   }
 
@@ -174,6 +202,8 @@ function attributeOne(
       beforeDays,
       afterDays,
       measuredDeltaMonthly: null,
+      uncertaintyMonthly: null,
+      breakdown: null,
       runRateMonthly: null,
       resources: [],
       estimate: null,
@@ -184,68 +214,121 @@ function attributeOne(
     notes.push(`Only ${beforeDays} of ${W} days of billing data exist before the deploy; the baseline may be noisy.`);
   }
 
+  const svcBeforeStart = Math.max(beforeStart, prevServiceDay + 1);
+  const svcAfterEnd = Math.min(afterEnd, nextServiceDay - 1);
+
   const resources: ResourceImpact[] = [];
+  let touchedCount = 0;
   for (const history of index.resources.values()) {
     const touched = [...history.days].some(
       ([day, entry]) => day >= deployDay && day <= afterEnd && hasSha(entry.shas, change.sha),
     );
-    const beforeSum = beforeDays > 0 ? sumDays(history, beforeStart, beforeEnd) : 0;
-    const beforeDaily = beforeDays > 0 ? beforeSum / beforeDays : 0;
+    const before = windowStats(history, beforeStart, beforeEnd);
     const base = {
       resourceId: history.id,
       resourceName: history.name,
       serviceName: history.serviceName,
       provider: history.provider,
       regionId: history.regionId,
-      beforeDaily,
     };
 
     if (touched) {
+      touchedCount++;
       // Measure until the window ends or a later change re-tags the resource.
-      let sum = 0;
       let days = 0;
       for (let day = afterStart; day <= afterEnd; day++) {
         const entry = history.days.get(day);
         if (entry && entry.shas.size > 0 && !hasSha(entry.shas, change.sha)) break;
-        sum += entry?.cost ?? 0;
         days++;
       }
       if (days < afterDays) {
         notes.push(`${history.name ?? history.id} was re-tagged by a later change after ${days} day(s); measured over those days only.`);
       }
-      const afterDaily = days > 0 ? sum / days : 0;
+      const after = windowStats(history, afterStart, afterStart + days - 1);
       resources.push({
         ...base,
         status: history.firstDay < deployDay ? 'changed' : 'added',
-        afterDaily,
-        deltaMonthly: (afterDaily - beforeDaily) * DAYS_PER_MONTH,
+        beforeDaily: before.mean,
+        afterDaily: after.mean,
+        deltaMonthly: (after.mean - before.mean) * DAYS_PER_MONTH,
         afterDays: days,
+        standardErrorMonthly: standardError(before, after) * DAYS_PER_MONTH,
+        significant: true,
+      });
+      continue;
+    }
+
+    if (serviceTag === null || history.serviceTag !== serviceTag) continue;
+
+    if (history.lastDay >= deployDay - 1 && history.lastDay <= deployDay && before.mean > 0) {
+      // A resource of this service stopped billing at the deploy: treat it as removed by the change.
+      resources.push({
+        ...base,
+        status: 'removed',
+        beforeDaily: before.mean,
+        afterDaily: 0,
+        deltaMonthly: -before.mean * DAYS_PER_MONTH,
+        afterDays,
+        standardErrorMonthly: standardError(before, { mean: 0, variance: 0, days: 0 }) * DAYS_PER_MONTH,
+        significant: true,
       });
     } else if (
-      serviceTag !== null &&
-      history.serviceTag === serviceTag &&
-      history.lastDay >= deployDay - 1 &&
-      history.lastDay <= deployDay &&
-      beforeSum > 0
+      history.firstDay < deployDay &&
+      history.lastDay > deployDay &&
+      svcBeforeStart <= beforeEnd &&
+      afterStart <= svcAfterEnd
     ) {
-      // A resource of this service stopped billing at the deploy: treat it as removed by the change.
-      resources.push({ ...base, status: 'removed', afterDaily: 0, deltaMonthly: -beforeDaily * DAYS_PER_MONTH, afterDays });
+      // Unmodified resource of the deployed service. Its cost can still move because of the
+      // change (application code, configuration, traffic patterns): measure it as service-level impact.
+      const svcBefore = windowStats(history, svcBeforeStart, beforeEnd);
+      const svcAfter = windowStats(history, afterStart, svcAfterEnd);
+      const diff = svcAfter.mean - svcBefore.mean;
+      const se = standardError(svcBefore, svcAfter);
+      resources.push({
+        ...base,
+        status: 'affected',
+        beforeDaily: svcBefore.mean,
+        afterDaily: svcAfter.mean,
+        deltaMonthly: diff * DAYS_PER_MONTH,
+        afterDays: svcAfter.days,
+        standardErrorMonthly: se * DAYS_PER_MONTH,
+        // Listed only when the shift is both statistically clear (beyond three standard errors: a
+        // service has many resources, so ~95% would flag noise on some by chance) and material
+        // (≥5% of its previous cost and ≥1 unit of currency a month). It counts in the total either way.
+        significant:
+          Math.abs(diff) > SIGNIFICANCE_Z * se &&
+          Math.abs(diff) >= MATERIALITY * svcBefore.mean &&
+          Math.abs(diff) * DAYS_PER_MONTH >= 1,
+      });
     }
   }
 
   resources.sort((a, b) => Math.abs(b.deltaMonthly) - Math.abs(a.deltaMonthly));
 
-  if (resources.length === 0) {
+  if (touchedCount === 0 && !resources.some((r) => r.status === 'removed' || (r.status === 'affected' && r.significant))) {
     notes.push(
-      `No billed resources carry ${TAG_KEYS.sha}=${change.sha}. Check that deploys apply CostTrace tags and that the tag is activated for cost allocation.`,
+      serviceTag === null
+        ? `No billed resources carry ${TAG_KEYS.sha}=${change.sha}. Check that deploys apply CostTrace tags and that the tag is activated for cost allocation.`
+        : `No significant cost change found: no resources carry ${TAG_KEYS.sha}=${change.sha} and the ${TAG_KEYS.service}=${serviceTag} resources held steady.`,
     );
   }
   if (resources.some((r) => r.status === 'removed')) {
     notes.push('Removed resources are inferred from the service tag: they stopped billing at the deploy.');
   }
+  const affected = resources.filter((r) => r.status === 'affected' && r.significant);
+  if (affected.length > 0) {
+    notes.push(
+      `${affected.length} resource(s) of ${serviceTag} changed cost without being modified by this change — typically application code or configuration. Organic traffic growth over the same days is included too.`,
+    );
+  }
 
-  const measured = resources.reduce((sum, r) => sum + r.deltaMonthly, 0);
-  const runRate = resources.reduce((sum, r) => sum + r.afterDaily, 0) * DAYS_PER_MONTH;
+  const sum = (list: ResourceImpact[]) => list.reduce((total, r) => total + r.deltaMonthly, 0);
+  const infrastructure = sum(resources.filter((r) => r.status !== 'affected'));
+  const service = sum(resources.filter((r) => r.status === 'affected'));
+  const measured = infrastructure + service;
+  // ≈95% range for the total, assuming independent daily noise per resource.
+  const uncertainty = 2 * Math.sqrt(resources.reduce((total, r) => total + r.standardErrorMonthly ** 2, 0));
+  const runRate = resources.reduce((total, r) => total + r.afterDaily, 0) * DAYS_PER_MONTH;
 
   return {
     change,
@@ -253,11 +336,13 @@ function attributeOne(
     beforeDays,
     afterDays,
     measuredDeltaMonthly: measured,
+    uncertaintyMonthly: uncertainty,
+    breakdown: { infrastructureMonthly: infrastructure, serviceMonthly: service },
     runRateMonthly: runRate,
     resources,
     estimate:
       change.estimateMonthly !== undefined
-        ? compareEstimate(measured, change.estimateMonthly, opts.estimateTolerance, opts.minFlagAmount)
+        ? compareEstimate(measured, change.estimateMonthly, uncertainty, opts.estimateTolerance, opts.minFlagAmount)
         : null,
     notes,
   };

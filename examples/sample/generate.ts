@@ -8,13 +8,15 @@
  *   PR #101 (AWS)   adds a NAT gateway; estimate misses data-processing charges → over estimate
  *   PR #102 (GCP)   upsizes a VM; measured cost matches the estimate
  *   PR #103 (Azure) deletes archive storage, slightly grows a function app → net savings
+ *   PR #104 (AWS)   app-only change with an N+1 query; no infrastructure changes, so a pre-merge
+ *                   estimate says $0, but the orders database bill rises → service-level impact
  */
 import { writeFileSync } from 'node:fs';
 
 const OUT = new URL('.', import.meta.url);
 const DAY_MS = 86_400_000;
 const START = Date.UTC(2026, 8, 1); // 2026-09-01
-const DAYS = 21;
+const DAYS = 28;
 const BASELINE_SHA = 'e4f5a6b7c8d9';
 
 const changes = [
@@ -44,6 +46,15 @@ const changes = [
     title: 'Drop legacy report archive storage',
     deployedAt: '2026-09-12T17:00:00Z',
     estimateMonthly: -240,
+  },
+  {
+    sha: '7d24e0c9b1a3',
+    pr: 104,
+    repo: 'acme/checkout',
+    service: 'checkout',
+    title: 'Load order line items individually in invoice view',
+    deployedAt: '2026-09-18T11:00:00Z',
+    estimateMonthly: 0,
   },
 ];
 
@@ -82,6 +93,18 @@ const changedBy = (i: number, before: number, after: number) => (day: number) =>
   return { daily: before * f + after * (1 - f), sha: changes[i]!.sha };
 };
 
+/**
+ * Untouched by change i (keeps its old tags) but its cost moves from `before` to `after` at the
+ * deploy: the effect of application code, which no infrastructure diff shows.
+ */
+const costShiftedBy = (i: number, before: number, after: number) => (day: number) => {
+  const d = deployDay(i);
+  if (day < d) return { daily: before, sha: BASELINE_SHA };
+  if (day > d) return { daily: after, sha: BASELINE_SHA };
+  const f = deployFraction(i);
+  return { daily: before * f + after * (1 - f), sha: BASELINE_SHA };
+};
+
 /** Deleted by change i: billed up to the deploy time, then gone. */
 const removedBy = (i: number, daily: number) => (day: number) => {
   const d = deployDay(i);
@@ -95,7 +118,7 @@ const azure = { provider: 'Microsoft', account: 'acme-reports-sub', region: 'eas
 
 const resources: Resource[] = [
   { ...aws, id: 'arn:aws:ec2:us-east-1:111122223333:autoscaling/checkout-api', name: 'checkout-api-asg', serviceName: 'Amazon EC2', serviceCategory: 'Compute', costOn: steady(38) },
-  { ...aws, id: 'arn:aws:rds:us-east-1:111122223333:db/orders', name: 'orders-db', serviceName: 'Amazon RDS', serviceCategory: 'Databases', costOn: steady(52) },
+  { ...aws, id: 'arn:aws:rds:us-east-1:111122223333:db/orders', name: 'orders-db', serviceName: 'Amazon RDS', serviceCategory: 'Databases', costOn: costShiftedBy(3, 52, 71) },
   { ...aws, id: 'arn:aws:ec2:us-east-1:111122223333:natgateway/nat-0a1b2c3d', name: 'checkout-egress-nat', serviceName: 'Amazon VPC', serviceCategory: 'Networking', costOn: addedBy(0, 44.1) },
   { ...aws, id: 'arn:aws:logs:us-east-1:111122223333:log-group/checkout-egress', name: 'checkout-egress-logs', serviceName: 'Amazon CloudWatch', serviceCategory: 'Management and Governance', costOn: addedBy(0, 1.2) },
   { ...gcp, id: '//compute.googleapis.com/projects/acme-search-prod/zones/us-central1-a/instances/search-indexer', name: 'search-indexer', serviceName: 'Compute Engine', serviceCategory: 'Compute', costOn: changedBy(1, 10, 25) },
