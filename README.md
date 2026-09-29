@@ -87,6 +87,20 @@ This is a JSON array of deploys, typically written by your CD pipeline:
 
 `estimateMonthly` is optional. It can come from a pre-merge estimator such as Infracost.
 
+## Use it from AI agents (MCP)
+
+CostTrace ships an [MCP server](packages/mcp), so Claude Code, Claude Desktop, Cursor, VS Code and
+other agents can answer *"what did this commit cost?"* or *"which deploys explain last week's cost
+increase?"* with measured numbers from your bill, rather than guesses:
+
+```bash
+claude mcp add costtrace --env COSTTRACE_FOCUS=s3://my-billing/focus/data/ --env COSTTRACE_CHANGES=./deploys.json -- npx -y -p @costtrace/mcp -p @costtrace/aws costtrace-mcp
+```
+
+Tools: `cost_of_change`, `cost_report`, `validate_billing_data`, `deploy_tags`, plus an
+`investigate_cost_increase` prompt. All are read-only. In a clone of this repo, `.mcp.json`
+connects Claude Code to the sample data after `npm run build`.
+
 ## Packages
 
 | Package | Purpose |
@@ -96,7 +110,8 @@ This is a JSON array of deploys, typically written by your CD pipeline:
 | [`@costtrace/aws`](packages/aws) | Read FOCUS exports directly from S3 |
 | [`@costtrace/azure`](packages/azure) | Read FOCUS exports directly from Azure Blob Storage |
 | [`@costtrace/gcp`](packages/gcp) | Read the FOCUS export directly from BigQuery |
-| [`costtrace`](packages/cli) | CLI (`report`, `validate`, `tags`) |
+| [`costtrace`](packages/cli) | CLI (`report`, `validate`, `tags`) and its programmatic API |
+| [`@costtrace/mcp`](packages/mcp) | MCP server for AI agents |
 
 ## Getting FOCUS data
 

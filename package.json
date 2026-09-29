@@ -10,13 +10,14 @@
     "packages/aws",
     "packages/azure",
     "packages/gcp",
-    "packages/cli"
+    "packages/cli",
+    "packages/mcp"
   ],
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
     "typecheck": "tsc -p tsconfig.test.json",
-    "test": "vitest run",
+    "test": "tsc -b && vitest run",
     "check": "npm run typecheck && npm test",
     "sample": "node examples/sample/generate.ts",
     "demo": "npm run build && node packages/cli/dist/cli.js report --focus examples/sample/focus-sample.csv --changes examples/sample/changes.json"

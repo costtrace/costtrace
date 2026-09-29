@@ -6,6 +6,7 @@ import {
   parseChanges,
   reportToMarkdown,
   reportToText,
+  type Change,
   type CostReport,
 } from '@costtrace/core';
 import { loadFocus, type CostMetric, type DateRange } from '@costtrace/focus';
@@ -33,30 +34,57 @@ export interface ReportArgs {
   failOnOver?: boolean;
 }
 
+export interface BuildReportOptions {
+  /** A local path or cloud URI (s3://, azure://, bq://…). */
+  focus: string;
+  changes: Change[];
+  windowDays?: number;
+  metric?: CostMetric;
+}
+
+export interface BuiltReport {
+  report: CostReport;
+  /** Invalid billing rows that were skipped. */
+  skippedRows: number;
+}
+
+/** Load billing data for the given changes and attribute cost to each. Shared by the CLI and the MCP server. */
+export async function buildReport(options: BuildReportOptions): Promise<BuiltReport> {
+  const metric = options.metric ?? 'EffectiveCost';
+  if (!METRICS.includes(metric)) throw new UsageError(`metric must be one of ${METRICS.join(', ')}`);
+  const windowDays = options.windowDays ?? 7;
+  if (!Number.isInteger(windowDays) || windowDays < 1) throw new UsageError('window must be a positive integer');
+
+  const parsed = await loadFocus(await resolveSource(options.focus), {
+    filter: isRelevantRow,
+    onlyTagged: true,
+    range: billingRange(options.changes.map((c) => c.deployedAt), windowDays),
+  });
+  if (parsed.rowsRead === 0 && parsed.issues.length > 0) {
+    throw new Error(`${options.focus} is not usable FOCUS data:\n${parsed.issues.map((i) => `  - ${i.message}`).join('\n')}`);
+  }
+  return { report: attributeChanges(parsed.rows, options.changes, { metric, windowDays }), skippedRows: parsed.issues.length };
+}
+
+/** Read a deploy log, optionally narrowed to one change (short or full SHA). */
+export async function readChanges(path: string, sha?: string): Promise<Change[]> {
+  let changes = parseChanges(JSON.parse(await readFile(path, 'utf8')));
+  if (sha) {
+    changes = changes.filter((c) => c.sha.startsWith(sha) || sha.startsWith(c.sha));
+    if (changes.length === 0) throw new UsageError(`No change with sha ${sha} in ${path}`);
+  }
+  return changes;
+}
+
 export async function report(args: ReportArgs): Promise<CommandResult> {
   const metric = (args.metric ?? 'EffectiveCost') as CostMetric;
   if (!METRICS.includes(metric)) throw new UsageError(`--metric must be one of ${METRICS.join(', ')}`);
   const windowDays = args.window === undefined ? 7 : Number(args.window);
   if (!Number.isInteger(windowDays) || windowDays < 1) throw new UsageError('--window must be a positive integer');
 
-  let changes = parseChanges(JSON.parse(await readFile(args.changes, 'utf8')));
-  if (args.sha) {
-    const sha = args.sha;
-    changes = changes.filter((c) => c.sha.startsWith(sha) || sha.startsWith(c.sha));
-    if (changes.length === 0) throw new UsageError(`No change with sha ${sha} in ${args.changes}`);
-  }
-
-  const parsed = await loadFocus(await resolveSource(args.focus), {
-    filter: isRelevantRow,
-    onlyTagged: true,
-    range: billingRange(changes.map((c) => c.deployedAt), windowDays),
-  });
-  if (parsed.rowsRead === 0 && parsed.issues.length > 0) {
-    throw new Error(`${args.focus} is not usable FOCUS data:\n${parsed.issues.map((i) => `  - ${i.message}`).join('\n')}`);
-  }
-
-  const result = attributeChanges(parsed.rows, changes, { metric, windowDays });
-  const skipped = parsed.issues.length > 0 ? `\n\n(${parsed.issues.length} invalid FOCUS row(s) skipped; run \`costtrace validate\` for details.)` : '';
+  const changes = await readChanges(args.changes, args.sha);
+  const { report: result, skippedRows } = await buildReport({ focus: args.focus, changes, windowDays, metric });
+  const skipped = skippedRows > 0 ? `\n\n(${skippedRows} invalid FOCUS row(s) skipped; run \`costtrace validate\` for details.)` : '';
   const exitCode = args.failOnOver && result.changes.some((c) => c.estimate?.verdict === 'over') ? 1 : 0;
 
   return { output: render(result, args.format ?? 'table') + skipped, exitCode };

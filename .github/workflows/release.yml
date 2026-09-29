@@ -37,7 +37,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          for pkg in focus core aws azure gcp cli; do
+          for pkg in focus core aws azure gcp cli mcp; do
             version=$(node -p "require('./packages/$pkg/package.json').version")
             if [ "v$version" != "$TAG" ]; then
               echo "::error::packages/$pkg is $version but the tag is $TAG"
@@ -55,7 +55,7 @@ jobs:
       # packages that already exist).
       - name: Stage packages on npm
         run: |
-          for pkg in focus:@costtrace/focus core:@costtrace/core aws:@costtrace/aws azure:@costtrace/azure gcp:@costtrace/gcp cli:costtrace; do
+          for pkg in focus:@costtrace/focus core:@costtrace/core aws:@costtrace/aws azure:@costtrace/azure gcp:@costtrace/gcp cli:costtrace mcp:@costtrace/mcp; do
             dir=${pkg%%:*}; name=${pkg#*:}
             version=$(node -p "require('./packages/$dir/package.json').version")
             if npm view "$name@$version" version >/dev/null 2>&1; then
@@ -72,7 +72,7 @@ jobs:
           {
             echo "## $TAG staged on npm — approval needed"
             echo
-            echo "Approve **in this order**: focus first, the CLI last (dependencies before dependents):"
+            echo "Approve **in this order**: focus first, then core and the connectors, then the CLI, then mcp:"
             echo
             echo '```bash'
             echo 'npm stage list @costtrace/focus    # then: npm stage approve <stage-id>'
@@ -81,6 +81,7 @@ jobs:
             echo 'npm stage list @costtrace/azure'
             echo 'npm stage list @costtrace/gcp'
             echo 'npm stage list costtrace'
+            echo 'npm stage list @costtrace/mcp'
             echo '```'
             echo
             echo "Or approve each package on npmjs.com."

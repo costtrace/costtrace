@@ -20,6 +20,12 @@
       ],
       "@costtrace/gcp": [
         "./packages/gcp/src/index.ts"
+      ],
+      "@costtrace/mcp": [
+        "./packages/mcp/src/index.ts"
+      ],
+      "costtrace": [
+        "./packages/cli/src/index.ts"
       ]
     }
   },

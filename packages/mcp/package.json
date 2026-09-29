@@ -1,7 +1,7 @@
 {
-  "name": "costtrace",
+  "name": "@costtrace/mcp",
   "version": "0.2.0",
-  "description": "Trace measured cloud cost to the change that caused it.",
+  "description": "MCP server that lets AI agents ask CostTrace what a code or infrastructure change actually cost.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,7 +13,7 @@
     }
   },
   "bin": {
-    "costtrace": "dist/cli.js"
+    "costtrace-mcp": "dist/bin.js"
   },
   "files": [
     "dist",
@@ -24,7 +24,10 @@
   },
   "dependencies": {
     "@costtrace/core": "0.2.0",
-    "@costtrace/focus": "0.2.0"
+    "@costtrace/focus": "0.2.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "costtrace": "0.2.0",
+    "zod": "^4.6.5"
   },
   "peerDependencies": {
     "@costtrace/aws": "0.2.0",
@@ -45,14 +48,16 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/costtrace/costtrace.git",
-    "directory": "packages/cli"
+    "directory": "packages/mcp"
   },
   "keywords": [
     "finops",
     "focus",
     "cloud-cost",
-    "cost-attribution",
-    "cli"
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "claude"
   ],
   "homepage": "https://costtrace.io",
   "bugs": {

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "costtrace": {
+      "command": "node",
+      "args": ["packages/mcp/dist/bin.js"],
+      "env": {
+        "COSTTRACE_FOCUS": "examples/sample/focus-sample.csv",
+        "COSTTRACE_CHANGES": "examples/sample/changes.json"
+      }
+    }
+  }
+}

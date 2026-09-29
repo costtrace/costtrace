@@ -12,6 +12,8 @@ export default defineConfig({
       '@costtrace/aws': src('aws'),
       '@costtrace/azure': src('azure'),
       '@costtrace/gcp': src('gcp'),
+      '@costtrace/mcp': src('mcp'),
+      costtrace: src('cli'),
     },
   },
   test: {
