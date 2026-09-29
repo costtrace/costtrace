@@ -180,8 +180,8 @@ release:
    number, then commit.
 2. Tag and push:
    ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
+   git tag v0.3.0
+   git push origin v0.3.0
    ```
 
 3. Approve the staged packages with `npm stage approve <stage-id>` (IDs are in the workflow

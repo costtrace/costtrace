@@ -109,7 +109,7 @@ export function createServer(options: ServerOptions = {}): McpServer {
   const defaultChanges = options.changes ?? process.env.COSTTRACE_CHANGES;
 
   const server = new McpServer(
-    { name: 'costtrace', title: 'CostTrace', version: options.version ?? '0.2.0' },
+    { name: 'costtrace', title: 'CostTrace', version: options.version ?? '0.3.0' },
     { instructions: INSTRUCTIONS },
   );
 
