@@ -181,6 +181,11 @@
   pre.term .c { color: var(--code-muted); }
   pre.term .p { color: #5eead4; }
 
+  .btn .gh { flex: none; }
+  .card h3 .gh { vertical-align: -3px; margin-right: 4px; }
+  a.link-card { display: block; text-decoration: none; color: inherit; transition: border-color .15s; }
+  a.link-card:hover { border-color: var(--accent); }
+  a.link-card p { overflow-wrap: anywhere; }
   .pillars { display: grid; gap: 14px; grid-template-columns: 1fr; }
   @media (min-width: 720px) { .pillars { grid-template-columns: repeat(3, 1fr); } }
 
@@ -211,7 +216,7 @@
         spend back to the pull request that caused it, then checks it against the estimate.
       </p>
       <div class="cta">
-        <a class="btn primary" href="https://github.com/costtrace/costtrace">Get started on GitHub</a>
+        <a class="btn primary" href="https://github.com/costtrace/costtrace"><svg class="gh" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
         <code class="install">npx costtrace --help</code>
       </div>
 
@@ -327,6 +332,26 @@
         </div>
       </div>
     </section>
+    <section id="open-source">
+      <div class="wrap">
+        <h2>Built in the open</h2>
+        <p class="sub">CostTrace is open source under Apache-2.0. Use it, read every line of it, and help shape what comes next.</p>
+        <div class="pillars">
+          <a class="card link-card" href="https://github.com/costtrace/costtrace">
+            <h3><svg class="gh" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> Source code</h3>
+            <p>github.com/costtrace/costtrace</p>
+          </a>
+          <a class="card link-card" href="https://github.com/costtrace/costtrace/issues">
+            <h3>Ideas &amp; bugs</h3>
+            <p>Open an issue: feature requests and cloud adapters are welcome.</p>
+          </a>
+          <a class="card link-card" href="mailto:security@costtrace.io">
+            <h3>Security</h3>
+            <p>security@costtrace.io, or report privately on GitHub.</p>
+          </a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>
@@ -335,7 +360,8 @@
       <span>
         <a href="https://github.com/costtrace/costtrace">GitHub</a> ·
         <a href="https://www.npmjs.com/package/costtrace">npm</a> ·
-        <a href="https://github.com/costtrace/costtrace/security/policy">Security</a>
+        <a href="https://github.com/costtrace/costtrace/security/policy">Security</a> ·
+        <a href="mailto:security@costtrace.io">security@costtrace.io</a>
       </span>
     </div>
   </footer>
