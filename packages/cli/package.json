@@ -1,6 +1,6 @@
 {
   "name": "costtrace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Trace measured cloud cost to the change that caused it.",
   "license": "Apache-2.0",
   "type": "module",
@@ -12,8 +12,8 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@costtrace/core": "0.1.0",
-    "@costtrace/focus": "0.1.0"
+    "@costtrace/core": "0.1.1",
+    "@costtrace/focus": "0.1.1"
   },
   "repository": {
     "type": "git",
