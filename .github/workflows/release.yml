@@ -1,10 +1,13 @@
 name: Release
 
-# Stages all packages on npm when a version tag (v1.2.3) is pushed.
-# Uses npm trusted publishing (OIDC): no npm token is stored anywhere, and
-# npm attaches provenance linking each package to this workflow run.
-# Staged packages go live only after a maintainer approves them with 2FA,
-# so a compromised workflow or tag push alone cannot release anything.
+# Publishes to npm when a version tag (v1.2.3) is pushed. See RELEASING.md.
+#
+# Two gates, via npm trusted publishing (OIDC: no npm token is stored anywhere; npm attaches
+# provenance linking every package to this workflow run):
+#   1. The `publish` job runs in the `npm` environment, which requires a maintainer to approve it
+#      in GitHub. After approval the libraries are published.
+#   2. The packages people execute directly — the CLI and the MCP server — are only *staged*;
+#      a maintainer must approve each on npm with 2FA before it goes live.
 
 on:
   push:
@@ -18,12 +21,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
+  verify:
     runs-on: ubuntu-latest
-    environment: npm
-    permissions:
-      contents: read
-      id-token: write # OIDC token for npm trusted publishing
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -31,7 +30,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
+          cache: npm
 
       - name: Check tag matches package versions
         env:
@@ -48,15 +47,44 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: npm # requires maintainer approval
+    permissions:
+      contents: read
+      id-token: write # OIDC token for npm trusted publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
       - run: npm run build
 
       # Dependencies first. Versions already on npm are skipped, which makes re-runs safe and lets
       # a brand-new package be published by hand once (npm only allows trusted publishing for
       # packages that already exist).
-      - name: Stage packages on npm
+      - name: Publish libraries
         run: |
-          for pkg in focus:@costtrace/focus core:@costtrace/core aws:@costtrace/aws azure:@costtrace/azure gcp:@costtrace/gcp cli:costtrace mcp:@costtrace/mcp; do
-            dir=${pkg%%:*}; name=${pkg#*:}
+          for dir in focus core aws azure gcp; do
+            name=$(node -p "require('./packages/$dir/package.json').name")
+            version=$(node -p "require('./packages/$dir/package.json').version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version is already published; skipping"
+            else
+              npm publish -w "$name" --access public
+            fi
+          done
+
+      - name: Stage CLI and MCP server for 2FA approval
+        run: |
+          for dir in cli mcp; do
+            name=$(node -p "require('./packages/$dir/package.json').name")
             version=$(node -p "require('./packages/$dir/package.json').version")
             if npm view "$name@$version" version >/dev/null 2>&1; then
               echo "$name@$version is already published; skipping"
@@ -70,19 +98,13 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           {
-            echo "## $TAG staged on npm — approval needed"
+            echo "## $TAG: libraries published, CLI and MCP server staged"
             echo
-            echo "Approve **in this order**: focus first, then core and the connectors, then the CLI, then mcp:"
+            echo "Approve on npm with 2FA: the CLI first, then the MCP server (it depends on the CLI)."
+            echo "npm's automated review takes about 5–10 minutes after staging."
             echo
             echo '```bash'
-            echo 'npm stage list @costtrace/focus    # then: npm stage approve <stage-id>'
-            echo 'npm stage list @costtrace/core'
-            echo 'npm stage list @costtrace/aws'
-            echo 'npm stage list @costtrace/azure'
-            echo 'npm stage list @costtrace/gcp'
-            echo 'npm stage list costtrace'
+            echo 'npm stage list costtrace          # then: npm stage approve <stage-id>'
             echo 'npm stage list @costtrace/mcp'
             echo '```'
-            echo
-            echo "Or approve each package on npmjs.com."
           } >> "$GITHUB_STEP_SUMMARY"
