@@ -1,6 +1,6 @@
 # CostTrace
 
-**Trace measured cloud cost to the change that caused it.**
+**Trace measured cloud cost to the change that caused it.** · [costtrace.io](https://costtrace.io)
 
 Pre-merge cost tools *estimate* what a change will cost. CostTrace *measures* it: after a change
 ships, it reads your real cloud bill, attributes cost to the exact commit and PR that caused it, and

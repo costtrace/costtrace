@@ -30,5 +30,8 @@
   "scripts": {
     "prepublishOnly": "tsc -b"
   },
-  "homepage": "https://github.com/costtrace/costtrace#readme"
+  "homepage": "https://costtrace.io",
+  "bugs": {
+    "url": "https://github.com/costtrace/costtrace/issues"
+  }
 }

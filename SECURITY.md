@@ -5,7 +5,8 @@
 **Please do not open a public issue for security problems.**
 
 Report vulnerabilities privately through GitHub:
-**[Security → Report a vulnerability](https://github.com/costtrace/costtrace/security/advisories/new)**.
+**[Security → Report a vulnerability](https://github.com/costtrace/costtrace/security/advisories/new)**,
+or email **security@costtrace.io**.
 
 Include what you found, how to reproduce it, and the affected version. You can expect an initial
 response within 7 days. We'll keep you updated while we work on a fix and credit you in the advisory
