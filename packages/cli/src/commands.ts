@@ -8,7 +8,13 @@ import {
   reportToText,
   type CostReport,
 } from '@costtrace/core';
-import { loadFocus, type CostMetric } from '@costtrace/focus';
+import { loadFocus, type CostMetric, type DateRange } from '@costtrace/focus';
+import { UsageError } from './errors.js';
+import { resolveSource } from './sources.js';
+
+export { UsageError };
+
+const DAY_MS = 86_400_000;
 
 export interface CommandResult {
   output: string;
@@ -33,11 +39,6 @@ export async function report(args: ReportArgs): Promise<CommandResult> {
   const windowDays = args.window === undefined ? 7 : Number(args.window);
   if (!Number.isInteger(windowDays) || windowDays < 1) throw new UsageError('--window must be a positive integer');
 
-  const parsed = await loadFocus(args.focus, { filter: isRelevantRow });
-  if (parsed.rowsRead === 0 && parsed.issues.length > 0) {
-    throw new Error(`${args.focus} is not usable FOCUS data:\n${parsed.issues.map((i) => `  - ${i.message}`).join('\n')}`);
-  }
-
   let changes = parseChanges(JSON.parse(await readFile(args.changes, 'utf8')));
   if (args.sha) {
     const sha = args.sha;
@@ -45,11 +46,30 @@ export async function report(args: ReportArgs): Promise<CommandResult> {
     if (changes.length === 0) throw new UsageError(`No change with sha ${sha} in ${args.changes}`);
   }
 
+  const parsed = await loadFocus(await resolveSource(args.focus), {
+    filter: isRelevantRow,
+    onlyTagged: true,
+    range: billingRange(changes.map((c) => c.deployedAt), windowDays),
+  });
+  if (parsed.rowsRead === 0 && parsed.issues.length > 0) {
+    throw new Error(`${args.focus} is not usable FOCUS data:\n${parsed.issues.map((i) => `  - ${i.message}`).join('\n')}`);
+  }
+
   const result = attributeChanges(parsed.rows, changes, { metric, windowDays });
   const skipped = parsed.issues.length > 0 ? `\n\n(${parsed.issues.length} invalid FOCUS row(s) skipped; run \`costtrace validate\` for details.)` : '';
   const exitCode = args.failOnOver && result.changes.some((c) => c.estimate?.verdict === 'over') ? 1 : 0;
 
   return { output: render(result, args.format ?? 'table') + skipped, exitCode };
+}
+
+/** The billing days a report needs: every deploy's before and after windows, plus a day of margin. */
+export function billingRange(deploys: Date[], windowDays: number): DateRange | undefined {
+  if (deploys.length === 0) return undefined;
+  const times = deploys.map((d) => Math.floor(d.getTime() / DAY_MS) * DAY_MS);
+  return {
+    start: new Date(Math.min(...times) - (windowDays + 1) * DAY_MS),
+    end: new Date(Math.max(...times) + (windowDays + 2) * DAY_MS),
+  };
 }
 
 function render(result: CostReport, format: string): string {
@@ -68,7 +88,7 @@ function render(result: CostReport, format: string): string {
 export async function validate(args: { focus: string }): Promise<CommandResult> {
   // One pass that counts rows without keeping them, so validating a huge export stays within memory.
   let tagged = 0;
-  const { rowsRead, issues, columns, files } = await loadFocus(args.focus, {
+  const { rowsRead, issues, columns, files } = await loadFocus(await resolveSource(args.focus), {
     filter: (row) => {
       if (row.resourceId !== null && isRelevantRow(row)) tagged++;
       return false;
@@ -122,4 +142,3 @@ export function tags(args: TagsArgs): CommandResult {
   }
 }
 
-export class UsageError extends Error {}

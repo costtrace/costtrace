@@ -1,8 +1,23 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/focus" },
-    { "path": "packages/core" },
-    { "path": "packages/cli" }
+    {
+      "path": "packages/focus"
+    },
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/aws"
+    },
+    {
+      "path": "packages/azure"
+    },
+    {
+      "path": "packages/gcp"
+    },
+    {
+      "path": "packages/cli"
+    }
   ]
 }

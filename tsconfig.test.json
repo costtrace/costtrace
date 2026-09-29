@@ -6,9 +6,26 @@
     "declaration": false,
     "declarationMap": false,
     "paths": {
-      "@costtrace/focus": ["./packages/focus/src/index.ts"],
-      "@costtrace/core": ["./packages/core/src/index.ts"]
+      "@costtrace/focus": [
+        "./packages/focus/src/index.ts"
+      ],
+      "@costtrace/core": [
+        "./packages/core/src/index.ts"
+      ],
+      "@costtrace/aws": [
+        "./packages/aws/src/index.ts"
+      ],
+      "@costtrace/azure": [
+        "./packages/azure/src/index.ts"
+      ],
+      "@costtrace/gcp": [
+        "./packages/gcp/src/index.ts"
+      ]
     }
   },
-  "include": ["packages/*/src", "packages/*/test", "vitest.config.ts"]
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "vitest.config.ts"
+  ]
 }

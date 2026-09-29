@@ -33,5 +33,21 @@
   "homepage": "https://costtrace.io",
   "bugs": {
     "url": "https://github.com/costtrace/costtrace/issues"
+  },
+  "peerDependencies": {
+    "@costtrace/aws": "0.1.2",
+    "@costtrace/azure": "0.1.2",
+    "@costtrace/gcp": "0.1.2"
+  },
+  "peerDependenciesMeta": {
+    "@costtrace/aws": {
+      "optional": true
+    },
+    "@costtrace/azure": {
+      "optional": true
+    },
+    "@costtrace/gcp": {
+      "optional": true
+    }
   }
 }

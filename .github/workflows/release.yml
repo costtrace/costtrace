@@ -37,7 +37,7 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          for pkg in focus core cli; do
+          for pkg in focus core aws azure gcp cli; do
             version=$(node -p "require('./packages/$pkg/package.json').version")
             if [ "v$version" != "$TAG" ]; then
               echo "::error::packages/$pkg is $version but the tag is $TAG"
@@ -52,6 +52,9 @@ jobs:
 
       - run: npm stage publish -w @costtrace/focus --access public
       - run: npm stage publish -w @costtrace/core --access public
+      - run: npm stage publish -w @costtrace/aws --access public
+      - run: npm stage publish -w @costtrace/azure --access public
+      - run: npm stage publish -w @costtrace/gcp --access public
       - run: npm stage publish -w costtrace --access public
 
       - name: Approval instructions
@@ -61,11 +64,14 @@ jobs:
           {
             echo "## $TAG staged on npm — approval needed"
             echo
-            echo "Approve **in this order** (the CLI depends on core, which depends on focus):"
+            echo "Approve **in this order**: focus first, the CLI last (dependencies before dependents):"
             echo
             echo '```bash'
             echo 'npm stage list @costtrace/focus    # then: npm stage approve <stage-id>'
             echo 'npm stage list @costtrace/core'
+            echo 'npm stage list @costtrace/aws'
+            echo 'npm stage list @costtrace/azure'
+            echo 'npm stage list @costtrace/gcp'
             echo 'npm stage list costtrace'
             echo '```'
             echo

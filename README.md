@@ -93,31 +93,40 @@ This is a JSON array of deploys, typically written by your CD pipeline:
 |---|---|
 | [`@costtrace/focus`](packages/focus) | Parse and validate FOCUS cost and usage data |
 | [`@costtrace/core`](packages/core) | Tag convention, attribution engine, estimate vs. actual, report formatting |
+| [`@costtrace/aws`](packages/aws) | Read FOCUS exports directly from S3 |
+| [`@costtrace/azure`](packages/azure) | Read FOCUS exports directly from Azure Blob Storage |
+| [`@costtrace/gcp`](packages/gcp) | Read the FOCUS export directly from BigQuery |
 | [`costtrace`](packages/cli) | CLI (`report`, `validate`, `tags`) |
 
 ## Getting FOCUS data
 
-Every major cloud exports FOCUS natively. Point `--focus` at a single export file or at a whole
-folder of them. Folders are searched recursively, and CSV, gzipped CSV and Parquet (Snappy, Gzip,
-Zstd, Brotli) are all read directly.
+Every major cloud exports FOCUS natively. Point `--focus` straight at the export, or at a local copy:
 
-| Provider | Native FOCUS export | Get it locally |
+| Provider | Native FOCUS export | `--focus` |
 |---|---|---|
-| AWS | Billing and Cost Management → Data Exports → FOCUS, to S3 (Parquet or CSV) | `aws s3 sync s3://<bucket>/<prefix> ./exports` |
-| Azure | Cost Management → Exports → FOCUS cost and usage, to Blob Storage (CSV or Parquet) | `azcopy copy '<container-url>' ./exports --recursive` |
-| Google Cloud | FOCUS export to BigQuery (`gcp_billing_export_focus_<account>`) | Export the table to Cloud Storage as Parquet, then `gcloud storage cp -r gs://<bucket>/<path> ./exports` |
-| Oracle Cloud | FOCUS cost reports in Object Storage (gzipped CSV) | `oci os object bulk-download --namespace bling --bucket-name <tenancy-ocid> --prefix FOCUS --download-dir ./exports` |
+| AWS | Data Exports → FOCUS, to S3 | `s3://bucket/prefix` ([@costtrace/aws](packages/aws)) |
+| Azure | Cost Management → Exports → FOCUS, to Blob Storage | `azure://account/container/prefix` or a SAS URL ([@costtrace/azure](packages/azure)) |
+| Google Cloud | FOCUS export to BigQuery | `bq://project.dataset.gcp_billing_export_focus_<account>` ([@costtrace/gcp](packages/gcp)) |
+| Oracle Cloud | FOCUS cost reports in Object Storage | a local copy: `oci os object bulk-download --namespace bling --bucket-name <tenancy-ocid> --prefix FOCUS --download-dir ./exports` |
+| Any | A downloaded export | `./exports`: a file or folder of `.csv`, `.csv.gz` or `.parquet` |
 
 ```bash
-costtrace report --focus ./exports --changes changes.json
+npm install costtrace @costtrace/aws       # install only the connectors you use
+npx costtrace report --focus s3://my-billing/focus/data/ --changes changes.json
 ```
 
-CostTrace streams exports and keeps only rows that carry CostTrace tags. A 2-million-row export
-(460 MB uncompressed) is processed in about 5 seconds with about 125 MB of memory.
+Connectors use each cloud's standard credentials (AWS profiles and roles, `az login` or SAS URLs,
+Google Application Default Credentials) and explain what's missing when access fails. They read
+only what's needed:
+- For S3 and Blob Storage: only the export columns CostTrace uses, via ranged reads, and only the
+  billing periods the report covers.
+- For BigQuery: a query filtered by date and CostTrace tags.
+
+A 2-million-row export (460 MB uncompressed) is processed in about 5 seconds with about 125 MB of
+memory.
 
 Activate the `costtrace_*` tags as **cost allocation tags** in your billing console. Otherwise they
-won't appear in exports. Direct connectors for S3, Blob Storage and BigQuery, which skip the local
-copy, are on the roadmap.
+won't appear in exports.
 
 ## Limitations
 
@@ -132,7 +141,7 @@ copy, are on the roadmap.
 
 ## Roadmap
 
-- Direct connectors: S3 (AWS), Blob Storage (Azure), BigQuery (Google Cloud), Object Storage (OCI)
+- Direct Oracle Cloud Object Storage connector
 - Estimator adapter: Infracost
 - GitHub Action: post and update the PR comment after deploy
 - Dashboard: cost per change, service and team over time

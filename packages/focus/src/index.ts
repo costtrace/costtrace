@@ -10,7 +10,19 @@ export {
   type RowFilter,
   type RowMapper,
 } from './parse.js';
-export { formatOf, loadFocus, loadFocusFile, type LoadOptions, type LoadResult } from './load.js';
+export { loadFocus, loadFocusFile, type LoadOptions, type LoadResult } from './load.js';
+export {
+  formatOf,
+  localSource,
+  outsideRange,
+  type DateRange,
+  type ExportFile,
+  type ExportFormat,
+  type FileSource,
+  type FocusSource,
+  type RowQuery,
+  type RowSource,
+} from './source.js';
 
 import type { CostMetric, FocusRow } from './types.js';
 

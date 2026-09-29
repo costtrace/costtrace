@@ -9,6 +9,9 @@ export default defineConfig({
     alias: {
       '@costtrace/focus': src('focus'),
       '@costtrace/core': src('core'),
+      '@costtrace/aws': src('aws'),
+      '@costtrace/azure': src('azure'),
+      '@costtrace/gcp': src('gcp'),
     },
   },
   test: {

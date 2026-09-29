@@ -7,6 +7,9 @@
   "workspaces": [
     "packages/focus",
     "packages/core",
+    "packages/aws",
+    "packages/azure",
+    "packages/gcp",
     "packages/cli"
   ],
   "scripts": {

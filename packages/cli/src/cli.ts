@@ -9,8 +9,12 @@ Usage:
   costtrace validate --focus <path>
   costtrace tags     --sha <sha> [--pr <n>] [--repo <owner/name>] [--service <name>] [--format json|terraform|env]
 
-<path> is a FOCUS export file or a folder of them (searched recursively):
-  .csv, .csv.gz or .parquet, as exported by AWS, Azure, Google Cloud and OCI.
+<path> is where the FOCUS export lives:
+  ./exports                                  local file or folder (.csv, .csv.gz, .parquet)
+  s3://bucket/prefix                         AWS Data Exports      (needs @costtrace/aws)
+  azure://account/container/prefix           Azure Cost Management (needs @costtrace/azure)
+  https://account.blob.core.windows.net/…    Azure, e.g. a SAS URL (needs @costtrace/azure)
+  bq://project.dataset.table                 Google Cloud BigQuery (needs @costtrace/gcp)
 
 Report options:
   --sha <sha>          Only report on this change

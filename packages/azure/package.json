@@ -1,0 +1,44 @@
+{
+  "name": "@costtrace/azure",
+  "version": "0.1.2",
+  "description": "Read FOCUS exports for CostTrace directly from Azure Blob Storage (Cost Management exports).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@azure/identity": "^4.13.3",
+    "@azure/storage-blob": "^12.34.0",
+    "@costtrace/focus": "0.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/costtrace/costtrace.git",
+    "directory": "packages/azure"
+  },
+  "keywords": [
+    "finops",
+    "focus",
+    "cloud-cost",
+    "azure",
+    "blob-storage",
+    "cost-management"
+  ],
+  "scripts": {
+    "prepublishOnly": "tsc -b"
+  },
+  "homepage": "https://costtrace.io",
+  "bugs": {
+    "url": "https://github.com/costtrace/costtrace/issues"
+  }
+}

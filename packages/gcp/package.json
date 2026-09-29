@@ -1,0 +1,43 @@
+{
+  "name": "@costtrace/gcp",
+  "version": "0.1.2",
+  "description": "Read the Google Cloud FOCUS billing export for CostTrace directly from BigQuery.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@costtrace/focus": "0.1.2",
+    "@google-cloud/bigquery": "^9.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/costtrace/costtrace.git",
+    "directory": "packages/gcp"
+  },
+  "keywords": [
+    "finops",
+    "focus",
+    "cloud-cost",
+    "gcp",
+    "google-cloud",
+    "bigquery"
+  ],
+  "scripts": {
+    "prepublishOnly": "tsc -b"
+  },
+  "homepage": "https://costtrace.io",
+  "bugs": {
+    "url": "https://github.com/costtrace/costtrace/issues"
+  }
+}
