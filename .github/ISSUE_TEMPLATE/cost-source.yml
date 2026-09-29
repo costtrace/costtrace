@@ -1,0 +1,21 @@
+name: New cost source
+description: Ask for CostTrace to read cost from another provider or tool
+labels: [cost-source]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Provider or tool
+      placeholder: e.g. OpenAI API, Kubernetes (OpenCost), Snowflake, Datadog
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: How it exposes cost data
+      description: FOCUS export, cost API, billing CSV… Links to its docs help a lot.
+  - type: textarea
+    id: attribution
+    attributes:
+      label: How cost could map to services or deploys
+      description: Tags, labels, projects, API keys, namespaces…

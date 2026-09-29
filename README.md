@@ -170,29 +170,11 @@ npm run build
 npm run sample  # regenerate examples/sample
 ```
 
-### Releasing
+### Contributing and releasing
 
-Releases are staged from GitHub Actions through npm trusted publishing, and go live only after a
-maintainer approves them with 2FA. No npm token is involved, and every package gets provenance. To
-release:
-
-1. Bump the `version` of all three packages (and the internal dependency versions) to the same
-   number, then commit.
-2. Tag and push:
-   ```bash
-   git tag v0.3.0
-   git push origin v0.3.0
-   ```
-
-3. Approve the staged packages with `npm stage approve <stage-id>` (IDs are in the workflow
-   summary and in `npm stage list <package>`), or on npmjs.com. Approve **`@costtrace/focus`
-   first, then `@costtrace/core` and the connectors, then `costtrace`**, and make sure each approval
-   succeeds before the next. A package approved before its dependency is live can't be installed until the dependency
-   is approved. Approval fails with "automated review hasn't finished" for the first few minutes
-   after staging, so just retry.
-
-The release workflow checks that the tag matches the package versions, runs the tests, and stages
-the packages. Release tags are protected, so they can't be moved or deleted once pushed.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to make changes (every change goes through a pull
+request, and changes to published packages include a changeset), and [RELEASING.md](RELEASING.md)
+for how releases are cut and approved.
 
 ## License
 

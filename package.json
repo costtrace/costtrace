@@ -20,12 +20,15 @@
     "test": "tsc -b && vitest run",
     "check": "npm run typecheck && npm test",
     "sample": "node examples/sample/generate.ts",
-    "demo": "npm run build && node packages/cli/dist/cli.js report --focus examples/sample/focus-sample.csv --changes examples/sample/changes.json"
+    "demo": "npm run build && node packages/cli/dist/cli.js report --focus examples/sample/focus-sample.csv --changes examples/sample/changes.json",
+    "changeset": "changeset",
+    "version-packages": "changeset version && npm install --package-lock-only"
   },
   "engines": {
     "node": ">=22.12"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "@types/node": "^26.6.3",
     "hyparquet-writer": "^0.16.10",
     "typescript": "^7.0.2",
