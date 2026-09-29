@@ -1,0 +1,54 @@
+name: Release
+
+# Publishes all packages to npm when a version tag (v1.2.3) is pushed.
+# Uses npm trusted publishing (OIDC): no npm token is stored anywhere, and
+# npm attaches provenance linking each package to this workflow run.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # OIDC token for npm trusted publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Check tag matches package versions
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          for pkg in focus core cli; do
+            version=$(node -p "require('./packages/$pkg/package.json').version")
+            if [ "v$version" != "$TAG" ]; then
+              echo "::error::packages/$pkg is $version but the tag is $TAG"
+              exit 1
+            fi
+          done
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      # Dependencies first: the CLI depends on core, which depends on focus.
+      - run: npm publish -w @costtrace/focus --access public
+      - run: npm publish -w @costtrace/core --access public
+      - run: npm publish -w costtrace --access public

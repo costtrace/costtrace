@@ -109,6 +109,22 @@ npm run build
 npm run sample  # regenerate examples/sample
 ```
 
+### Releasing
+
+Releases are published from GitHub Actions through npm trusted publishing. No npm token is involved,
+and every package gets provenance. To release:
+
+1. Bump the `version` of all three packages (and the internal dependency versions) to the same
+   number, then commit.
+2. Tag and push:
+   ```bash
+   git tag v0.1.1
+   git push origin v0.1.1
+   ```
+
+The release workflow checks that the tag matches the package versions, runs the tests, and publishes.
+Release tags are protected, so they can't be moved or deleted once pushed.
+
 ## License
 
 [Apache-2.0](LICENSE)
