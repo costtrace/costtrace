@@ -9,7 +9,8 @@ const SAMPLE = fileURLToPath(new URL('../../../examples/sample/focus-sample.csv'
 const COLUMNS = [
   'BillingAccountId', 'ChargePeriodStart', 'ChargePeriodEnd', 'BilledCost', 'EffectiveCost', 'ListCost',
   'BillingCurrency', 'ChargeCategory', 'ServiceProviderName', 'ServiceName', 'ServiceCategory', 'RegionId',
-  'ResourceId', 'ResourceName', 'Tags', 'x_Labels',
+  'ResourceId', 'ResourceName', 'Tags', 'ConsumedQuantity', 'ConsumedUnit', 'PricingQuantity', 'PricingUnit',
+  'CommitmentDiscountId', 'x_Labels',
 ];
 
 /** A row as the BigQuery client returns it: wrapped TIMESTAMPs, NUMERIC objects, STRUCT-array tags. */
@@ -30,6 +31,11 @@ function asBigQueryRow(r: FocusRow): Record<string, unknown> {
     ResourceId: r.resourceId,
     ResourceName: r.resourceName,
     Tags: Object.entries(r.tags).map(([key, value]) => ({ key, value })),
+    ConsumedQuantity: numeric(r.consumedQuantity),
+    ConsumedUnit: r.consumedUnit,
+    PricingQuantity: numeric(r.pricingQuantity),
+    PricingUnit: r.pricingUnit,
+    CommitmentDiscountId: r.commitmentDiscountId,
   };
 }
 

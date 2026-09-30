@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { changeToMarkdown, describe, parseChanges, reportToMarkdown, type Change, type ChangeCost, type CostReport } from '@costtrace/core';
-import { buildReport, readChanges, tags, validate } from 'costtrace';
+import { changeToMarkdown, describe, explanationToMarkdown, parseChanges, reportToMarkdown, type Change, type ChangeCost, type CostReport } from '@costtrace/core';
+import { buildExplanation, buildReport, dayRange, monthRanges, readChanges, tags, validate } from 'costtrace';
 import { z } from 'zod';
 
 export interface ServerOptions {
@@ -17,8 +17,8 @@ const INSTRUCTIONS = `CostTrace measures what deployed code and infrastructure c
 organization's real cloud bill (FOCUS billing exports from AWS, Azure, Google Cloud or OCI), and
 compares it with the pre-merge estimate.
 
-Use cost_of_change to answer "what did this commit / PR cost?" and cost_report to answer "which
-deploys explain a cost change?". Figures are monthly, in the billing currency, with a ± range from
+Use explain_cost_change to answer "why did our bill go up (or down) this month?", cost_of_change to
+answer "what did this commit / PR cost?" and cost_report to answer "which deploys changed cost?". Figures are monthly, in the billing currency, with a ± range from
 day-to-day variation; treat changes within the range as noise. "affected" resources are unmodified
 resources of the deployed service whose cost moved after the deploy, usually application code.
 Billing data lags by up to a day, so very recent deploys report status "pending".`;
@@ -231,6 +231,46 @@ export function createServer(options: ServerOptions = {}): McpServer {
   );
 
   server.registerTool(
+    'explain_cost_change',
+    {
+      title: 'Explain a cost change',
+      description:
+        'Explain why cloud cost changed between two periods: per service, how much came from usage, unit rates (prices, discounts, instance sizes), new and removed resources and period length, which resources drove it, and which deploys coincide with it. Correlations are not proof of cause; say "coincides with", not "caused".',
+      inputSchema: {
+        month: z.string().optional().describe('Calendar month to explain against the month before, e.g. 2026-09'),
+        from: z.string().optional().describe('First day to explain (YYYY-MM-DD), with `to`; compared with the equally long period before'),
+        to: z.string().optional().describe('Last day to explain (YYYY-MM-DD), inclusive'),
+        baselineFrom: z.string().optional().describe('Compare against these days instead (YYYY-MM-DD), with baselineTo'),
+        baselineTo: z.string().optional(),
+        focus: focusParam,
+        changes: z.string().optional().describe('Deploy log JSON, to correlate cost changes with deploys. Defaults to COSTTRACE_CHANGES.'),
+      },
+      annotations: { readOnlyHint: true, openWorldHint: true },
+    },
+    async (args) => {
+      try {
+        let current;
+        let baseline;
+        if (args.month) ({ current, baseline } = monthRanges(args.month));
+        else if (args.from && args.to) current = dayRange(args.from, args.to, 'from', 'to');
+        else throw new Error('Give `month` (e.g. 2026-09), or `from` and `to` (YYYY-MM-DD).');
+        if (args.baselineFrom && args.baselineTo) baseline = dayRange(args.baselineFrom, args.baselineTo, 'baselineFrom', 'baselineTo');
+
+        const log = args.changes ?? defaultChanges;
+        const changes = log ? await readChanges(log) : [];
+        const explanation = await buildExplanation({ focus: focusFor(args.focus), current, baseline, changes });
+        return {
+          content: [{ type: 'text', text: explanationToMarkdown(explanation) }],
+          // Dates become ISO strings, so the result is plain JSON.
+          structuredContent: JSON.parse(JSON.stringify(explanation)) as Record<string, unknown>,
+        };
+      } catch (error) {
+        return failure(error);
+      }
+    },
+  );
+
+  server.registerTool(
     'validate_billing_data',
     {
       title: 'Validate billing data',
@@ -291,7 +331,7 @@ export function createServer(options: ServerOptions = {}): McpServer {
             type: 'text',
             text: [
               `Our cloud costs went up${service ? ` for the ${service} service` : ''}${since ? ` since ${since}` : ''}. Find out why.`,
-              '1. Call cost_report with those filters and rank deploys by measured monthly impact. Ignore changes within their ± range.',
+              '1. Call explain_cost_change for the period to see which services changed and whether usage, rates or new resources drove it. Then call cost_report with those filters and rank deploys by measured monthly impact, ignoring changes within their ± range.',
               '2. For each significant increase, look at the commit (git show <sha>) and explain what in the diff most likely caused it, using the resources CostTrace lists: "added"/"changed" resources point at infrastructure, "affected" ones at application code or configuration.',
               '3. Suggest a concrete fix for the largest one, and say what CostTrace would need to show after the fix to confirm it worked.',
             ].join('\n'),

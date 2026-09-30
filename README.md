@@ -53,6 +53,41 @@ The two work well together: when a budget alert fires, CostTrace shows which dep
 4. **Report.** You get a terminal table, a PR-comment markdown, or JSON. `--fail-on-over` fails CI when
    the measured cost exceeds the estimate.
 
+## Explain a cost change
+
+`costtrace explain` answers *"what changed in my cloud bill, and which engineering changes coincide
+with it?"* It uses only data your bill already has: FOCUS usage quantities, units and commitment
+discounts.
+
+```bash
+costtrace explain --focus ./exports --month 2026-09 --changes deploys.json
+```
+
+```
+AMAZON BEDROCK (AWS)   +$1,638.36 (+29%)
+  period length -$180.48 · usage +$1,818.85 (+34%)
+  → Coincides with deploys to support-agent: PR #105 "Include full ticket history…" (deployed 2026-09-09)
+
+AMAZON RDS (AWS)   +$325.42 (+9%)
+  analytics-warehouse   +$130.20   usage +0%, rate +10%, commitment discount no longer applied
+  → No corresponding deploy detected for +$130.20
+```
+
+For every service, the change is split into parts that add up exactly:
+- **Period length:** 30 vs. 31 days
+- **Usage:** more or less of the same thing
+- **Rate:** prices, discounts, instance sizes, models
+- **New and removed resources**, with the dates they started or stopped billing
+- **Not splittable:** rows with no usage quantity
+
+Changes within normal variation aren't tied to deploys. Deploy correlations say "coincides with", not
+"caused", because timing is evidence, not proof.
+
+Use `--from`/`--to` for any period (compared with the equally long period before) or
+`--baseline-from`/`--baseline-to` to choose the baseline. `--format json` returns the full
+structured explanation for other tools, and the MCP server exposes the same thing as
+`explain_cost_change`.
+
 ## Try it
 
 This needs no cloud account. It runs on the bundled multi-cloud sample data (AWS, GCP and Azure).
@@ -97,7 +132,7 @@ increase?"* with measured numbers from your bill, rather than guesses:
 claude mcp add costtrace --env COSTTRACE_FOCUS=s3://my-billing/focus/data/ --env COSTTRACE_CHANGES=./deploys.json -- npx -y -p @costtrace/mcp -p @costtrace/aws costtrace-mcp
 ```
 
-Tools: `cost_of_change`, `cost_report`, `validate_billing_data`, `deploy_tags`, plus an
+Tools: `explain_cost_change`, `cost_of_change`, `cost_report`, `validate_billing_data`, `deploy_tags`, plus an
 `investigate_cost_increase` prompt. All are read-only. In a clone of this repo, `.mcp.json`
 connects Claude Code to the sample data after `npm run build`.
 
@@ -110,7 +145,7 @@ connects Claude Code to the sample data after `npm run build`.
 | [`@costtrace/aws`](packages/aws) | Read FOCUS exports directly from S3 |
 | [`@costtrace/azure`](packages/azure) | Read FOCUS exports directly from Azure Blob Storage |
 | [`@costtrace/gcp`](packages/gcp) | Read the FOCUS export directly from BigQuery |
-| [`costtrace`](packages/cli) | CLI (`report`, `validate`, `tags`) and its programmatic API |
+| [`costtrace`](packages/cli) | CLI (`report`, `explain`, `validate`, `tags`) and its programmatic API |
 | [`@costtrace/mcp`](packages/mcp) | MCP server for AI agents |
 
 ## Getting FOCUS data

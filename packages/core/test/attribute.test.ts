@@ -22,6 +22,11 @@ function row(day: number, resourceId: string | null, cost: number, tags: Record<
     resourceName: resourceId,
     regionId: 'us-east-1',
     tags,
+    consumedQuantity: null,
+    consumedUnit: null,
+    pricingQuantity: null,
+    pricingUnit: null,
+    commitmentDiscountId: null,
     ...extra,
   };
 }

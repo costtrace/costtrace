@@ -26,7 +26,7 @@ describe('CostTrace MCP server', () => {
 
   it('lists read-only tools with descriptions and instructions', async () => {
     const { tools } = await client.listTools();
-    expect(tools.map((t) => t.name).sort()).toEqual(['cost_of_change', 'cost_report', 'deploy_tags', 'validate_billing_data']);
+    expect(tools.map((t) => t.name).sort()).toEqual(['cost_of_change', 'cost_report', 'deploy_tags', 'explain_cost_change', 'validate_billing_data']);
     for (const tool of tools) {
       expect(tool.description!.length).toBeGreaterThan(40);
       expect(tool.annotations?.readOnlyHint).toBe(true);
@@ -70,8 +70,22 @@ describe('CostTrace MCP server', () => {
     expect((result.structuredContent as any).changes.map((c: any) => c.pr)).toEqual([103]);
   });
 
+  it('explain_cost_change explains a month with deploy correlations', async () => {
+    const result = await client.callTool({ name: 'explain_cost_change', arguments: { month: '2026-09' } });
+    const e = result.structuredContent as any;
+    expect(result.isError).toBeFalsy();
+    expect(e.current.start).toBe('2026-09-01');
+    const bedrock = e.services.find((s: any) => s.serviceName === 'Amazon Bedrock');
+    expect(bedrock.correlations[0].change).toMatchObject({ pr: 105, deployedAt: '2026-09-09T12:00:00.000Z' });
+    expect(text(result)).toMatch(/Coincides with deploys to support-agent: PR #105/);
+
+    const bad = await client.callTool({ name: 'explain_cost_change', arguments: {} });
+    expect(bad.isError).toBe(true);
+    expect(text(bad)).toMatch(/Give `month`/);
+  });
+
   it('validate_billing_data and deploy_tags', async () => {
-    expect(text(await client.callTool({ name: 'validate_billing_data', arguments: {} }))).toMatch(/250 valid row\(s\).*194 row\(s\) with CostTrace tags — OK/);
+    expect(text(await client.callTool({ name: 'validate_billing_data', arguments: {} }))).toMatch(/638 valid row\(s\).*455 row\(s\) with CostTrace tags — OK/);
     const tags = text(await client.callTool({ name: 'deploy_tags', arguments: { sha: 'ABC1234', service: 'Checkout', format: 'terraform' } }));
     expect(tags).toContain('costtrace_sha     = "abc1234"');
   });

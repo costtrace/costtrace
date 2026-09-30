@@ -4,12 +4,18 @@
  */
 export {
   billingRange,
+  buildExplanation,
   buildReport,
+  dayRange,
+  explain,
+  monthRanges,
   readChanges,
   report,
   tags,
   validate,
+  type BuildExplanationOptions,
   type BuildReportOptions,
+  type ExplainArgs,
   type BuiltReport,
   type CommandResult,
   type ReportArgs,
