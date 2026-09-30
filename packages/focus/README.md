@@ -4,7 +4,7 @@ Parse and validate [FOCUS](https://focus.finops.org) (FinOps Open Cost and Usage
 billing data, the vendor-neutral export format supported by AWS, Azure, Oracle Cloud and others.
 
 This package is part of [CostTrace](https://github.com/costtrace/costtrace), which traces measured
-cloud cost to the change that caused it.
+cloud cost back to the changes you ship.
 
 ```bash
 npm install @costtrace/focus

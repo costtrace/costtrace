@@ -1,6 +1,6 @@
 # costtrace
 
-**Trace measured cloud cost to the change that caused it.**
+**Trace measured cloud cost back to the changes you ship.**
 
 Pre-merge tools estimate what a change will cost. CostTrace measures it from your real cloud bill,
 in the vendor-neutral [FOCUS](https://focus.finops.org) format, and attributes it to the exact

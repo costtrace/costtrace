@@ -70,7 +70,7 @@ Drop `-p @costtrace/aws` for a local export, or swap in `@costtrace/azure` or `@
 In a clone of the CostTrace repository, run `npm install && npm run build`, then open Claude Code
 in the repo root. The bundled `.mcp.json` connects the server to the sample data. Ask:
 
-- *What did commit 7d24e0c cost, and what in the code likely caused it?*
+- *What did commit 7d24e0c cost, and what in the code most likely explains it?*
 - *Which deploys to checkout increased our costs?*
 - *Use the investigate_cost_increase prompt for the checkout service.*
 
