@@ -1,6 +1,6 @@
 {
   "name": "costtrace",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Trace measured cloud cost to the change that caused it.",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,13 +23,13 @@
     "prepublishOnly": "tsc -b"
   },
   "dependencies": {
-    "@costtrace/core": "0.3.0",
-    "@costtrace/focus": "0.3.0"
+    "@costtrace/core": "0.4.0",
+    "@costtrace/focus": "0.4.0"
   },
   "peerDependencies": {
-    "@costtrace/aws": "0.3.0",
-    "@costtrace/azure": "0.3.0",
-    "@costtrace/gcp": "0.3.0"
+    "@costtrace/aws": "0.4.0",
+    "@costtrace/azure": "0.4.0",
+    "@costtrace/gcp": "0.4.0"
   },
   "peerDependenciesMeta": {
     "@costtrace/aws": {
