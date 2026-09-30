@@ -2,6 +2,10 @@ import { readFile } from 'node:fs/promises';
 import {
   attributeChanges,
   buildTags,
+  CostComparison,
+  explanationToMarkdown,
+  explanationToText,
+  type CostExplanation,
   isRelevantRow,
   parseChanges,
   reportToMarkdown,
@@ -139,6 +143,118 @@ export async function validate(args: { focus: string }): Promise<CommandResult> 
   }
   if (issues.length > 50) lines.push(`  …and ${issues.length - 50} more`);
   return { output: lines.join('\n'), exitCode: 1 };
+}
+
+export interface BuildExplanationOptions {
+  /** A local path or cloud URI (s3://, azure://, bq://…). */
+  focus: string;
+  current: DateRange;
+  baseline?: DateRange;
+  changes?: Change[];
+  metric?: CostMetric;
+}
+
+/**
+ * Compare two billing periods and explain the difference. Rows are aggregated as they stream in,
+ * so the whole export is never held in memory. Shared by the CLI and the MCP server.
+ */
+export async function buildExplanation(options: BuildExplanationOptions): Promise<CostExplanation> {
+  const metric = options.metric ?? 'EffectiveCost';
+  if (!METRICS.includes(metric)) throw new UsageError(`metric must be one of ${METRICS.join(', ')}`);
+  let comparison: CostComparison;
+  try {
+    comparison = new CostComparison({ current: options.current, baseline: options.baseline, metric });
+  } catch (error) {
+    throw new UsageError((error as Error).message);
+  }
+  const loaded = await loadFocus(await resolveSource(options.focus), {
+    range: comparison.range,
+    filter: (row) => {
+      comparison.add(row);
+      return false;
+    },
+  });
+  if (loaded.rowsRead === 0 && loaded.issues.length > 0) {
+    throw new Error(`${options.focus} is not usable FOCUS data:\n${loaded.issues.map((i) => `  - ${i.message}`).join('\n')}`);
+  }
+  return comparison.explain(options.changes ?? []);
+}
+
+/** Parse an inclusive YYYY-MM-DD date as the start of that UTC day. */
+function parseDay(value: string, flag: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new UsageError(`${flag} must be a date like 2026-09-01`);
+  const d = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) throw new UsageError(`${flag} is not a valid date: ${value}`);
+  return d;
+}
+
+/** An inclusive day range, as typed on the command line, as a half-open DateRange. */
+export function dayRange(from: string, to: string, fromFlag = '--from', toFlag = '--to'): DateRange {
+  const start = parseDay(from, fromFlag);
+  const end = new Date(parseDay(to, toFlag).getTime() + DAY_MS);
+  if (end <= start) throw new UsageError(`${toFlag} must not be before ${fromFlag}`);
+  return { start, end };
+}
+
+/** A calendar month (YYYY-MM) and the month before it. */
+export function monthRanges(month: string): { current: DateRange; baseline: DateRange } {
+  const m = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!m) throw new UsageError('--month must look like 2026-09');
+  const year = Number(m[1]);
+  const index = Number(m[2]) - 1;
+  if (index < 0 || index > 11) throw new UsageError('--month must look like 2026-09');
+  return {
+    current: { start: new Date(Date.UTC(year, index, 1)), end: new Date(Date.UTC(year, index + 1, 1)) },
+    baseline: { start: new Date(Date.UTC(year, index - 1, 1)), end: new Date(Date.UTC(year, index, 1)) },
+  };
+}
+
+export interface ExplainArgs {
+  focus: string;
+  from?: string;
+  to?: string;
+  month?: string;
+  baselineFrom?: string;
+  baselineTo?: string;
+  changes?: string;
+  metric?: string;
+  format?: string;
+  top?: string;
+}
+
+export async function explain(args: ExplainArgs): Promise<CommandResult> {
+  const metric = (args.metric ?? 'EffectiveCost') as CostMetric;
+  if (!METRICS.includes(metric)) throw new UsageError(`--metric must be one of ${METRICS.join(', ')}`);
+  const top = args.top === undefined ? 6 : Number(args.top);
+  if (!Number.isInteger(top) || top < 1) throw new UsageError('--top must be a positive integer');
+
+  let current: DateRange;
+  let baseline: DateRange | undefined;
+  if (args.month) {
+    if (args.from || args.to) throw new UsageError('Use either --month or --from/--to');
+    ({ current, baseline } = monthRanges(args.month));
+  } else if (args.from && args.to) {
+    current = dayRange(args.from, args.to);
+  } else {
+    throw new UsageError('Give the period to explain: --month 2026-09, or --from 2026-09-01 --to 2026-09-30');
+  }
+  if (args.baselineFrom || args.baselineTo) {
+    if (!args.baselineFrom || !args.baselineTo) throw new UsageError('Give both --baseline-from and --baseline-to');
+    baseline = dayRange(args.baselineFrom, args.baselineTo, '--baseline-from', '--baseline-to');
+  }
+
+  const changes = args.changes ? await readChanges(args.changes) : [];
+  const explanation = await buildExplanation({ focus: args.focus, current, baseline, changes, metric });
+  switch (args.format ?? 'table') {
+    case 'table':
+      return { output: explanationToText(explanation, { maxServices: top }), exitCode: 0 };
+    case 'markdown':
+      return { output: explanationToMarkdown(explanation, { maxServices: top }), exitCode: 0 };
+    case 'json':
+      return { output: JSON.stringify(explanation, null, 2), exitCode: 0 };
+    default:
+      throw new UsageError('--format must be table, markdown or json');
+  }
 }
 
 export interface TagsArgs {

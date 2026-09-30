@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { parseFocusCsv } from '@costtrace/focus';
 import { describe, expect, it } from 'vitest';
 import { writeExportFolder } from '../../focus/test/fixtures.js';
-import { report, tags, validate } from '../src/commands.js';
+import { explain, report, tags, validate } from '../src/commands.js';
 
 const sample = (file: string) => fileURLToPath(new URL(`../../../examples/sample/${file}`, import.meta.url));
 const args = { focus: sample('focus-sample.csv'), changes: sample('changes.json') };
@@ -61,10 +61,64 @@ describe('costtrace on the sample dataset', () => {
 
       const check = await validate({ focus: join(dir, 'exports') });
       expect(check.exitCode).toBe(0);
-      expect(check.output).toMatch(/\(3 files\): 250 valid row\(s\).*— OK/);
+      expect(check.output).toMatch(/\(3 files\): 638 valid row\(s\).*— OK/);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('explains September against August', async () => {
+    const { output } = await explain({ focus: args.focus, month: '2026-09', changes: args.changes, format: 'json' });
+    const e = JSON.parse(output);
+    const service = (name: string) => e.services.find((s: any) => s.serviceName === name);
+
+    expect(e.current).toMatchObject({ start: '2026-09-01', end: '2026-09-30', days: 30 });
+    expect(e.baseline).toMatchObject({ start: '2026-08-01', end: '2026-08-31', days: 31 });
+    expect(e.delta).toBeGreaterThan(0);
+
+    // Bedrock: more tokens at the same price, coinciding with PR #105 to support-agent.
+    const bedrock = service('Amazon Bedrock');
+    expect(bedrock.usageChange).toBeGreaterThan(0.25);
+    expect(Math.abs(bedrock.rateChange)).toBeLessThan(0.01);
+    expect(bedrock.correlations[0]).toMatchObject({ relation: 'same-service', change: { pr: 105 } });
+
+    // NAT gateway: a new resource deployed by PR #101.
+    const vpc = service('Amazon VPC');
+    expect(vpc.drivers[0]).toMatchObject({ kind: 'added', startedOn: '2026-09-08' });
+    expect(vpc.correlations[0]).toMatchObject({ relation: 'deployed', change: { pr: 101 } });
+
+    // Analytics warehouse: its Reserved Instance expired; a rate change with no deploy behind it.
+    const warehouse = service('Amazon RDS').drivers.find((d: any) => d.resourceName === 'analytics-warehouse');
+    expect(warehouse).toMatchObject({ commitment: 'lost' });
+    expect(Math.abs(warehouse.usageChange)).toBeLessThan(0.01);
+    expect(warehouse.rateChange).toBeGreaterThan(0.05);
+
+    // Search indexer resize: same hours, a pricier machine.
+    const indexer = service('Compute Engine');
+    expect(indexer.effects.rate).toBeGreaterThan(250);
+    expect(indexer.correlations[0]).toMatchObject({ relation: 'deployed', change: { pr: 102 } });
+
+    // Steady services are not tied to deploys.
+    expect(service('Amazon EC2').material).toBe(false);
+  });
+
+  it('renders the explanation for people', async () => {
+    const text = (await explain({ focus: args.focus, month: '2026-09', changes: args.changes })).output;
+    expect(text).toContain('commitment discount no longer applied');
+    expect(text).toContain('No corresponding deploy detected');
+    expect(text).toContain('stopped billing after 2026-09-12');
+    expect(text).toMatch(/period length -\$/);
+
+    const md = (await explain({ focus: args.focus, from: '2026-09-15', to: '2026-09-28', format: 'markdown' })).output;
+    expect(md).toMatch(/^### 🧾 CostTrace · cost (increased|decreased)/);
+    expect(md).toContain('No deploy log given');
+  });
+
+  it('validates explain arguments', async () => {
+    await expect(explain({ focus: args.focus })).rejects.toThrow(/Give the period to explain/);
+    await expect(explain({ focus: args.focus, month: 'Sep' })).rejects.toThrow(/--month must look like/);
+    await expect(explain({ focus: args.focus, from: '2026-09-10', to: '2026-09-01' })).rejects.toThrow(/must not be before/);
+    await expect(explain({ focus: args.focus, month: '2026-09', from: '2026-09-01', to: '2026-09-02' })).rejects.toThrow(/either --month or/);
   });
 
   it('prints IaC tags', () => {

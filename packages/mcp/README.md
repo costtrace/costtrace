@@ -11,6 +11,7 @@ infrastructure change actually cost, measured from your real cloud bill.
 
 | Tool | Answers |
 |---|---|
+| `explain_cost_change` | Why did cost change this month (or any period)? Usage vs. rate vs. new and removed resources, per service, with the deploys that coincide |
 | `cost_of_change` | What did this commit or PR actually cost per month, and how does that compare with its estimate? |
 | `cost_report` | Which deploys explain a cost change? Filter by service and date. |
 | `validate_billing_data` | Is this FOCUS export readable, and do rows carry CostTrace tags? |

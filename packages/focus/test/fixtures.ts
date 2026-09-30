@@ -7,7 +7,7 @@ import type { FocusRow } from '../src/index.js';
 const CSV_COLUMNS = [
   'ChargePeriodStart', 'ChargePeriodEnd', 'BilledCost', 'EffectiveCost', 'ListCost', 'BillingCurrency',
   'ChargeCategory', 'ServiceProviderName', 'ServiceName', 'ServiceCategory', 'RegionId', 'ResourceId',
-  'ResourceName', 'Tags',
+  'ResourceName', 'Tags', 'ConsumedQuantity', 'ConsumedUnit', 'PricingQuantity', 'PricingUnit', 'CommitmentDiscountId',
 ];
 
 const csvField = (v: unknown) => {
@@ -23,7 +23,8 @@ export function toCsv(rows: FocusRow[]): string {
       [
         r.chargePeriodStart, r.chargePeriodEnd, r.billedCost, r.effectiveCost, r.listCost, r.billingCurrency,
         r.chargeCategory, r.provider, r.serviceName, r.serviceCategory, r.regionId, r.resourceId, r.resourceName,
-        Object.keys(r.tags).length ? r.tags : null,
+        Object.keys(r.tags).length ? r.tags : null, r.consumedQuantity, r.consumedUnit, r.pricingQuantity,
+        r.pricingUnit, r.commitmentDiscountId,
       ].map(csvField).join(','),
     );
   }
@@ -53,6 +54,11 @@ export async function writeParquet(file: string, rows: FocusRow[], codec: 'SNAPP
       { name: 'ResourceId', data: col((r) => r.resourceId), type: 'STRING', nullable: true },
       { name: 'ResourceName', data: col((r) => r.resourceName), type: 'STRING', nullable: true },
       { name: 'Tags', data: col((r) => (Object.keys(r.tags).length ? r.tags : null)), type: 'JSON', nullable: true },
+      { name: 'ConsumedQuantity', data: col((r) => r.consumedQuantity), type: 'DOUBLE', nullable: true },
+      { name: 'ConsumedUnit', data: col((r) => r.consumedUnit), type: 'STRING', nullable: true },
+      { name: 'PricingQuantity', data: col((r) => r.pricingQuantity), type: 'DOUBLE', nullable: true },
+      { name: 'PricingUnit', data: col((r) => r.pricingUnit), type: 'STRING', nullable: true },
+      { name: 'CommitmentDiscountId', data: col((r) => r.commitmentDiscountId), type: 'STRING', nullable: true },
       // Extra provider columns real exports carry; readers must ignore them.
       { name: 'x_ExportTime', data: col(() => 'ignored'), type: 'STRING' },
     ],

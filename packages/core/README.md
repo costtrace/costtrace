@@ -40,4 +40,21 @@ console.log(reportToMarkdown(report)); // ready to post as a PR comment
   and service-level impact, a run-rate, the estimate verdict (`within` / `over` / `under`, widened by
   the ± range), and notes about short baselines, missing tags or overlapping deploys.
 
+## Explaining a cost change
+
+```ts
+import { CostComparison, explanationToMarkdown } from '@costtrace/core';
+
+const comparison = new CostComparison({ current: { start: new Date('2026-09-01'), end: new Date('2026-10-01') } });
+for (const row of rows) comparison.add(row);          // stream rows in; nothing is kept per row
+const explanation = comparison.explain(changes);      // plain data: services, effects, drivers, correlations
+console.log(explanationToMarkdown(explanation));
+```
+
+Each service's change is split into `calendar` (period length), `usage`, `rate`, `added`, `removed`
+and `unexplained` (rows without quantities). The parts add up exactly to the change. Resources
+carrying a deploy's `costtrace_sha` are `deployed` correlations; other resources of a deployed
+service are `same-service` correlations. Both are correlations in time, not proof of cause. Only
+`material` changes (beyond period length, ≥5% and ≥1 unit of currency) should be tied to deploys.
+
 Licensed under Apache-2.0.

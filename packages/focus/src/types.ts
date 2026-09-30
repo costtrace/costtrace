@@ -25,6 +25,14 @@ export interface FocusRow {
   resourceName: string | null;
   regionId: string | null;
   tags: Record<string, string>;
+  /** Usage in the units it was consumed (ConsumedQuantity), e.g. hours, GB, requests. */
+  consumedQuantity: number | null;
+  consumedUnit: string | null;
+  /** Usage in the units it was priced (PricingQuantity); pairs with the unit price. */
+  pricingQuantity: number | null;
+  pricingUnit: string | null;
+  /** The commitment (Reserved Instance, Savings Plan, CUD…) that discounted this row, if any. */
+  commitmentDiscountId: string | null;
 }
 
 export interface ParseIssue {

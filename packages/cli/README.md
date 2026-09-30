@@ -20,6 +20,7 @@ PR #101  9f1c2ab  checkout     +$310.00   +$1,375.76  over estimate (4.4×)
 | Command | Purpose |
 |---|---|
 | `costtrace report --focus <csv> --changes <json>` | Measure each change. `--format table\|markdown\|json`, `--window <days>`, `--metric`, `--sha`, `--fail-on-over` |
+| `costtrace explain --focus <path> --month 2026-09 [--changes <json>]` | Explain a cost change between two periods: usage, rate, new and removed resources, period length, and the deploys that coincide with it. Also `--from/--to`, `--baseline-from/--baseline-to`, `--format table\|markdown\|json` |
 | `costtrace validate --focus <csv>` | Check a FOCUS export and list problems |
 | `costtrace tags --sha <sha> [--pr] [--repo] [--service]` | Print the tags your IaC should apply (`--format json\|terraform\|env`) |
 

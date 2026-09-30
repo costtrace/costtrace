@@ -23,6 +23,11 @@ export const USED_COLUMNS = [
   'ResourceName',
   'RegionId',
   'Tags',
+  'ConsumedQuantity',
+  'ConsumedUnit',
+  'PricingQuantity',
+  'PricingUnit',
+  'CommitmentDiscountId',
 ] as const;
 
 type UsedColumn = (typeof USED_COLUMNS)[number];
@@ -107,6 +112,11 @@ export function createRowMapper(columns: readonly string[]): RowMapper {
         resourceName: text('ResourceName'),
         regionId: text('RegionId'),
         tags: parseTags(value('Tags'), (message) => fail('Tags', message)),
+        consumedQuantity: number('ConsumedQuantity', false),
+        consumedUnit: text('ConsumedUnit'),
+        pricingQuantity: number('PricingQuantity', false),
+        pricingUnit: text('PricingUnit'),
+        commitmentDiscountId: text('CommitmentDiscountId'),
       };
       return { row: issues.length === 0 ? row : null, issues };
     },
