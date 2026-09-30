@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { changeToMarkdown, describe, explanationToMarkdown, parseChanges, reportToMarkdown, type Change, type ChangeCost, type CostReport } from '@costtrace/core';
@@ -12,6 +13,9 @@ export interface ServerOptions {
   /** Server version reported to clients. */
   version?: string;
 }
+
+/** This package's version, reported to MCP clients. */
+const VERSION: string = createRequire(import.meta.url)('../package.json').version;
 
 const INSTRUCTIONS = `CostTrace measures what deployed code and infrastructure changes actually cost, from the
 organization's real cloud bill (FOCUS billing exports from AWS, Azure, Google Cloud or OCI), and
@@ -109,7 +113,7 @@ export function createServer(options: ServerOptions = {}): McpServer {
   const defaultChanges = options.changes ?? process.env.COSTTRACE_CHANGES;
 
   const server = new McpServer(
-    { name: 'costtrace', title: 'CostTrace', version: options.version ?? '0.3.0' },
+    { name: 'costtrace', title: 'CostTrace', version: options.version ?? VERSION },
     { instructions: INSTRUCTIONS },
   );
 

@@ -1,6 +1,6 @@
 {
   "name": "@costtrace/aws",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Read FOCUS exports for CostTrace directly from Amazon S3 (AWS Data Exports).",
   "license": "Apache-2.0",
   "type": "module",
@@ -18,7 +18,7 @@
   ],
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1142.0",
-    "@costtrace/focus": "0.3.0"
+    "@costtrace/focus": "0.4.0"
   },
   "repository": {
     "type": "git",

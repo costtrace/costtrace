@@ -1,6 +1,6 @@
 {
   "name": "@costtrace/mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "MCP server that lets AI agents ask CostTrace what a code or infrastructure change actually cost.",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,16 +23,16 @@
     "prepublishOnly": "tsc -b"
   },
   "dependencies": {
-    "@costtrace/core": "0.3.0",
-    "@costtrace/focus": "0.3.0",
+    "@costtrace/core": "0.4.0",
+    "@costtrace/focus": "0.4.0",
     "@modelcontextprotocol/sdk": "^1.31.0",
-    "costtrace": "0.3.0",
+    "costtrace": "0.4.0",
     "zod": "^4.6.5"
   },
   "peerDependencies": {
-    "@costtrace/aws": "0.3.0",
-    "@costtrace/azure": "0.3.0",
-    "@costtrace/gcp": "0.3.0"
+    "@costtrace/aws": "0.4.0",
+    "@costtrace/azure": "0.4.0",
+    "@costtrace/gcp": "0.4.0"
   },
   "peerDependenciesMeta": {
     "@costtrace/aws": {

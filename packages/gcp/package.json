@@ -1,6 +1,6 @@
 {
   "name": "@costtrace/gcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Read the Google Cloud FOCUS billing export for CostTrace directly from BigQuery.",
   "license": "Apache-2.0",
   "type": "module",
@@ -17,7 +17,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@costtrace/focus": "0.3.0",
+    "@costtrace/focus": "0.4.0",
     "@google-cloud/bigquery": "^9.1.0"
   },
   "repository": {
