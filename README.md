@@ -140,7 +140,7 @@ This is a JSON array of deploys, typically written by your CD pipeline:
    "repo": "acme/checkout", "service": "checkout", "estimateMonthly": 310 }]
 ```
 
-`estimateMonthly` is optional. It can come from a pre-merge estimator such as Infracost.
+`estimateMonthly` is optional. It can come from any pre-merge cost estimate, such as your IaC cost tool's output.
 
 ## Use it from AI agents (MCP)
 
@@ -216,7 +216,7 @@ to trust them less. In short:
 ## Roadmap
 
 - Direct Oracle Cloud Object Storage connector
-- Estimator adapter: Infracost
+- Import pre-merge estimates automatically from IaC cost tools
 - GitHub Action: post and update the PR comment after deploy
 - Dashboard: cost per change, service and team over time
 

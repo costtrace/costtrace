@@ -12,7 +12,7 @@ export interface Change {
    */
   service?: string;
   title?: string;
-  /** Pre-merge monthly estimate (e.g. from Infracost), in the billing currency. */
+  /** Pre-merge monthly estimate (e.g. from an IaC cost tool), in the billing currency. */
   estimateMonthly?: number;
 }
 
