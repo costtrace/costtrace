@@ -85,7 +85,8 @@
   .brand svg { flex: none; }
   nav.links { display: flex; gap: 18px; font-size: 15px; }
   nav.links a { color: var(--muted); text-decoration: none; white-space: nowrap; }
-  @media (max-width: 480px) { nav.links { gap: 14px; } nav.links .wide-only { display: none; } }
+  @media (max-width: 480px) { nav.links { gap: 14px; } }
+  @media (max-width: 760px) { nav.links .wide-only { display: none; } }
   nav.links a:hover { color: var(--text); }
 
   .hero { padding-top: 48px; padding-bottom: 32px; }
@@ -147,6 +148,23 @@
   .msg.agent { border-left: 3px solid var(--accent); }
   .msg code { font: 13px var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
   .cta-note { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
+  .explain-head { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
+  .explain-head .label { display: block; font-size: 12px; color: var(--muted); }
+  .explain-head strong { font: 700 24px var(--mono); }
+  .explain-head .muted { color: var(--muted); font-size: 14px; }
+  .explain-head .split { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 13px var(--mono); color: var(--muted); }
+  .explain-grid { display: grid; gap: 12px; grid-template-columns: 1fr; margin-bottom: 12px; }
+  @media (min-width: 860px) { .explain-grid { grid-template-columns: repeat(3, 1fr); } }
+  .xcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .xtop { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .xtop .svc { font-weight: 700; }
+  .xtop .muted-sm { font-weight: 400; font-size: 13px; color: var(--muted); }
+  .xtop .amt { font: 700 18px var(--mono); color: var(--warn); }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; color: var(--muted); }
+  .facts b { color: var(--text); }
+  .corr { margin: 0; font-size: 14px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .corr.warn-note { border-left-color: var(--warn); }
+  #explain .term { margin-top: 12px; }
   .kicker { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
   .pillars.claims { margin-bottom: 20px; }
   .pillars.claims .card { border-top: 3px solid var(--accent); }
@@ -227,6 +245,7 @@
     </a>
     <nav class="links" aria-label="Primary">
       <a class="wide-only" href="#why">Why CostTrace</a>
+      <a class="wide-only" href="#explain">Explain</a>
       <a href="#agents">AI agents</a>
       <a class="wide-only" href="#how">How it works</a>
       <a href="https://github.com/costtrace/costtrace">GitHub</a>
@@ -286,6 +305,37 @@
             <p>Real billed cost from your provider's export, including your discounts, attributed to the exact commit, and compared against the estimate.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="explain">
+      <div class="wrap">
+        <p class="kicker">costtrace explain</p>
+        <h2>Your bill went up. Here's why.</h2>
+        <p class="sub">Point it at a billing period and it splits the change for every service into usage, rate, new and removed resources, then lines it up with your deploys. It uses only what your bill already contains.</p>
+        <div class="explain-head">
+          <div><span class="label">September vs. August</span><strong>+$3,082</strong> <span class="muted">(+26.6%)</span></div>
+          <div class="split"><span>usage +$1,928</span><span>new resources +$1,016</span><span>rate +$511</span><span>period length −$373</span></div>
+        </div>
+        <div class="explain-grid">
+          <div class="xcard">
+            <div class="xtop"><span class="svc">Amazon Bedrock</span><span class="amt">+$1,638</span></div>
+            <div class="facts"><span>Usage <b>+34%</b></span><span>Price <b>flat</b></span></div>
+            <p class="corr">Coincides with <b>PR #105</b> "Include full ticket history in support-agent context", deployed Sep 9 to support-agent</p>
+          </div>
+          <div class="xcard">
+            <div class="xtop"><span class="svc">Amazon VPC</span><span class="amt">+$989</span></div>
+            <div class="facts"><span><b>New resource</b>: NAT gateway, billing since Sep 8</span></div>
+            <p class="corr">Correlated with <b>PR #101</b>, which deployed it</p>
+          </div>
+          <div class="xcard">
+            <div class="xtop"><span class="svc">analytics-warehouse <span class="muted-sm">RDS</span></span><span class="amt">+$130</span></div>
+            <div class="facts"><span>Usage <b>flat</b></span><span>Rate <b>+10%</b></span></div>
+            <p class="corr warn-note">Reserved Instance no longer applied. <b>No corresponding deploy detected</b></p>
+          </div>
+        </div>
+        <p class="footnote">Sample data. Changes are split into parts that add up exactly; periods of different lengths and normal daily variation are separated out, so noise isn't blamed on a deploy. CostTrace says "coincides with", never "caused": timing is evidence, not proof.</p>
+<pre class="term"><span class="p">$</span> npx costtrace explain --focus s3://my-billing/focus/data/ --month 2026-09 --changes deploys.json</pre>
       </div>
     </section>
 
@@ -378,6 +428,9 @@
         <p class="sub">Install the CLI and the connector for your cloud. No cloud account handy? The repository ships a multi-cloud sample dataset.</p>
 <pre class="term"><span class="c"># the CLI, plus the connector for your cloud (aws, azure or gcp)</span>
 <span class="p">$</span> npm install costtrace @costtrace/aws
+
+<span class="c"># why did cost change this month? usage vs. rate vs. new resources, and which deploys coincide</span>
+<span class="p">$</span> npx costtrace explain --focus s3://my-billing/focus/data/ --month 2026-09 --changes changes.json
 
 <span class="c"># measure every change in a deploy log, straight from your billing export</span>
 <span class="p">$</span> npx costtrace report --focus s3://my-billing/focus/data/ --changes changes.json

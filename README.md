@@ -4,9 +4,23 @@
 
 Pre-merge cost tools *estimate* what a change will cost. CostTrace *measures* it: after a change
 ships, it reads your real cloud bill, attributes cost to the exact commit and PR that caused it, and
-compares the result with the estimate.
+compares the result with the estimate. When the bill moves, `costtrace explain` tells you why.
 
 ```
+$ costtrace explain --focus ./exports --month 2026-09 --changes deploys.json
+
+AMAZON BEDROCK (AWS)   +$1,638.36 (+29%)
+  period length -$180.48 · usage +$1,818.85 (+34%)
+  → Coincides with deploys to support-agent: PR #105 "Include full ticket history…"
+
+AMAZON RDS (AWS)   +$325.42 (+9%)
+  analytics-warehouse   +$130.20   usage +0%, rate +10%, commitment discount no longer applied
+  → No corresponding deploy detected for +$130.20
+```
+
+```
+$ costtrace report --focus ./exports --changes deploys.json
+
 PR #101  checkout  estimate +$310/mo  measured +$1,368 ± $42/mo  over estimate (4.4×)
   added     +$1,338.96/mo  checkout-egress-nat (AWS Amazon VPC)
 
@@ -15,7 +29,7 @@ PR #104  checkout  estimate    $0/mo  measured   +$579 ± $52/mo  over estimate
 ```
 
 It works with any cloud, because it reads the vendor-neutral
-[FOCUS](https://focus.finops.org) billing format that AWS, Azure, Oracle Cloud and others export natively.
+[FOCUS](https://focus.finops.org) billing format that AWS, Azure, Google Cloud and Oracle Cloud all export natively.
 
 ## Why not just cloud budgets?
 
@@ -98,6 +112,12 @@ npm run demo
 ```
 
 ```bash
+# Why did cost change? September vs. August, with the deploys that coincide
+node packages/cli/dist/cli.js explain \
+  --focus examples/sample/focus-sample.csv \
+  --changes examples/sample/changes.json \
+  --month 2026-09
+
 # PR comment for one change
 node packages/cli/dist/cli.js report \
   --focus examples/sample/focus-sample.csv \
