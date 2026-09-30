@@ -145,7 +145,7 @@ export function createServer(options: ServerOptions = {}): McpServer {
         service: z.string().optional().describe('Service the change deployed (the costtrace_service tag). Enables detection of application-code cost changes.'),
         pr: z.number().int().optional(),
         title: z.string().optional(),
-        estimateMonthly: z.number().optional().describe('Pre-merge monthly estimate to compare against, e.g. from Infracost'),
+        estimateMonthly: z.number().optional().describe('Pre-merge monthly estimate to compare against, e.g. from an IaC cost tool'),
         focus: focusParam,
         changes: z.string().optional().describe('Deploy log JSON used to look up the SHA. Defaults to COSTTRACE_CHANGES.'),
         windowDays: windowParam,

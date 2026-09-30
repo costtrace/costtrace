@@ -6,7 +6,7 @@ body:
     id: source
     attributes:
       label: Provider or tool
-      placeholder: e.g. OpenAI API, Kubernetes (OpenCost), Snowflake, Datadog
+      placeholder: e.g. an LLM API, Kubernetes, a data warehouse, an observability tool
     validations:
       required: true
   - type: textarea

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CostTrace</title>
 <meta name="description" content="Estimators predict. Budgets alert. CostTrace measures what each pull request actually cost from your real cloud bill, including application code. Open source, multi-cloud, built on FOCUS.">
-<meta property="og:title" content="CostTrace: trace measured cloud cost to the change that caused it">
+<meta property="og:title" content="CostTrace: trace measured cloud cost back to the changes you ship">
 <meta property="og:description" content="Estimates guess. CostTrace measures what each deploy actually costs from your real cloud bill, across AWS, Azure, GCP and OCI.">
 <meta property="og:url" content="https://costtrace.io/">
 <meta name="theme-color" content="#0f766e">
@@ -258,7 +258,7 @@
       <h1>Know what every deploy really costs.</h1>
       <p class="lede">
         Estimates only see infrastructure diffs, and budgets only see totals. CostTrace reads your
-        actual cloud bill and traces every change in spend back to the pull request that caused it,
+        actual cloud bill and traces each change in spend back to the pull requests and deploys it coincides with,
         including plain application code, then checks it against the estimate.
       </p>
       <div class="cta">
@@ -302,7 +302,7 @@
           </div>
           <div class="card accent">
             <h3>CostTrace measurement</h3>
-            <p>Real billed cost from your provider's export, including your discounts, attributed to the exact commit, and compared against the estimate.</p>
+            <p>Real billed cost from your provider's export, including your discounts, attributed to the commit that deployed it, and compared against the estimate.</p>
           </div>
         </div>
       </div>
@@ -334,7 +334,7 @@
             <p class="corr warn-note">Reserved Instance no longer applied. <b>No corresponding deploy detected</b></p>
           </div>
         </div>
-        <p class="footnote">Sample data. Changes are split into parts that add up exactly; periods of different lengths and normal daily variation are separated out, so noise isn't blamed on a deploy. CostTrace says "coincides with", never "caused": timing is evidence, not proof.</p>
+        <p class="footnote">Sample data. Changes are split into parts that add up exactly; periods of different lengths and normal daily variation are separated out, so noise isn't blamed on a deploy. CostTrace says "coincides with", never "caused": timing is evidence, not proof. <a href="https://github.com/costtrace/costtrace/blob/main/METHODOLOGY.md">How it works, and its limits</a>.</p>
 <pre class="term"><span class="p">$</span> npx costtrace explain --focus s3://my-billing/focus/data/ --month 2026-09 --changes deploys.json</pre>
       </div>
     </section>
@@ -342,27 +342,28 @@
     <section id="why">
       <div class="wrap">
         <p class="kicker">Why CostTrace</p>
-        <h2>Estimators predict. Budgets alert. CostTrace measures.</h2>
-        <p class="sub">Existing tools stop either before the merge or at the account level. None of them tell the engineer what their change actually cost. CostTrace connects your bill to the pull request.</p>
+        <h2>Designed for a different question.</h2>
+        <p class="sub">CostTrace is an open-source, local-first tool that measures how the changes you ship coincide with changes in your actual cloud bill, using your own FOCUS data, in your own CI. Estimators ask what a change <em>should</em> cost; budgets ask whether spend moved; FinOps platforms ask where the money went. CostTrace asks, right in the pull request: <strong>what did this change actually do to the real bill?</strong></p>
         <div class="pillars claims">
           <div class="card"><h3>Measured, not guessed</h3><p>What each change actually cost, read from your bill with your negotiated rates, not list-price estimates.</p></div>
-          <div class="card"><h3>Per pull request, even for code</h3><p>Cost is traced to the change that caused it, including changes with no infrastructure diff at all.</p></div>
-          <div class="card"><h3>Closes the loop</h3><p>Every estimate is checked against the actual, so teams learn where their estimates go wrong.</p></div>
+          <div class="card"><h3>Per pull request, even for code</h3><p>Cost changes are lined up with the deploys they coincide with, including changes with no infrastructure diff at all.</p></div>
+          <div class="card"><h3>Open and transparent</h3><p>Open source, runs on your own FOCUS export in your CI, and every figure comes with a ± range and <a href="https://github.com/costtrace/costtrace/blob/main/METHODOLOGY.md">a documented method</a>.</p></div>
         </div>
         <div class="table-scroll matrix-scroll">
           <table class="matrix">
             <thead><tr><th scope="col"><span class="sr">Capability</span></th><th scope="col" class="ours">CostTrace</th><th scope="col">Pre-merge estimators</th><th scope="col">Budgets &amp; anomaly alerts</th><th scope="col">FinOps platforms</th></tr></thead>
             <tbody>
-              <tr><th scope="row">Measured from your actual bill, with your discounts</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="yes" aria-label="Yes">✓</span></td><td><span class="yes" aria-label="Yes">✓</span></td></tr>
-              <tr><th scope="row">Tied to the pull request that caused it</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="part" aria-label="Partly">◐</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="no" aria-label="Not the focus">—</span></td></tr>
-              <tr><th scope="row">Catches cost from application code</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="part" aria-label="Partly">◐</span></td><td><span class="part" aria-label="Partly">◐</span></td></tr>
-              <tr><th scope="row">Estimate vs. actual for every change</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="no" aria-label="Not the focus">—</span></td></tr>
-              <tr><th scope="row">Delivered to the engineer, on the PR</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="no" aria-label="Not the focus">—</span></td></tr>
-              <tr><th scope="row">One tool across AWS, Azure, Google Cloud, OCI</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="part" aria-label="Partly">◐</span></td><td><span class="no" aria-label="Not the focus">—</span></td><td><span class="yes" aria-label="Yes">✓</span></td></tr>
+              <tr><th scope="row">Measured from your actual bill, with your discounts</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not its focus">—</span></td><td><span class="yes" aria-label="Yes">✓</span></td><td><span class="yes" aria-label="Yes">✓</span></td></tr>
+              <tr><th scope="row">Correlates cost changes with deploys and pull requests</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="part" aria-label="Partly or in some products">◐</span></td><td><span class="no" aria-label="Not its focus">—</span></td><td><span class="part" aria-label="Partly or in some products">◐</span></td></tr>
+              <tr><th scope="row">Catches cost from application code, not just infrastructure</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not its focus">—</span></td><td><span class="part" aria-label="Partly or in some products">◐</span></td><td><span class="part" aria-label="Partly or in some products">◐</span></td></tr>
+              <tr><th scope="row">Estimate vs. actual for each change</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not its focus">—</span></td><td><span class="no" aria-label="Not its focus">—</span></td><td><span class="no" aria-label="Not its focus">—</span></td></tr>
+              <tr><th scope="row">Delivered to the engineer, on the PR</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="yes" aria-label="Yes">✓</span></td><td><span class="no" aria-label="Not its focus">—</span></td><td><span class="no" aria-label="Not its focus">—</span></td></tr>
+              <tr><th scope="row">Open source, runs on your own billing export</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="part" aria-label="Partly or in some products">◐</span></td><td><span class="no" aria-label="Not its focus">—</span></td><td><span class="no" aria-label="Not its focus">—</span></td></tr>
+              <tr><th scope="row">One tool across AWS, Azure, Google Cloud, OCI</th><td class="ours"><span class="yes" aria-label="Yes">✓</span></td><td><span class="part" aria-label="Partly or in some products">◐</span></td><td><span class="no" aria-label="Not its focus">—</span></td><td><span class="yes" aria-label="Yes">✓</span></td></tr>
             </tbody>
           </table>
         </div>
-        <p class="footnote">✓ yes · ◐ partly · — not what it's built for. Compares typical capabilities of each category of tool as of September 2026; individual products vary. CostTrace works alongside them: when a budget alert fires, it shows which deploys explain it.</p>
+        <p class="footnote">✓ yes · ◐ partly, or only in some products · — not its focus. Categories, not specific products, as of September 2026; individual products vary, and some FinOps platforms now offer cost per deployment. CostTrace works alongside them: when a budget alert fires, it shows which deploys coincide with the change.</p>
       </div>
     </section>
 
@@ -370,7 +371,7 @@
       <div class="wrap">
         <p class="kicker">AI-native</p>
         <h2>Ask your coding agent what a change cost</h2>
-        <p class="sub">CostTrace ships an <a href="https://modelcontextprotocol.io">MCP</a> server, so Claude Code, Cursor, VS Code and other agents answer cost questions with numbers measured from your bill instead of guesses, and can trace a spike back to the diff that caused it.</p>
+        <p class="sub">CostTrace ships an <a href="https://modelcontextprotocol.io">MCP</a> server, so Claude Code, Cursor, VS Code and other agents answer cost questions with numbers measured from your bill instead of guesses, and can trace a spike back to the deploys and diffs it coincides with.</p>
         <div class="chat" aria-label="Example conversation with a coding agent using CostTrace">
           <div class="msg you"><span class="who">You</span>What did commit 7d24e0c cost, and why?</div>
           <div class="msg agent"><span class="who">Agent · via CostTrace</span><strong>+$579/mo ± $52</strong> since it deployed on Sep 18, against an estimate of $0. No infrastructure changed. The cost is service-level: <code>orders-db</code> (AWS RDS) went from $52 to $71 a day. The diff loads order line items one query at a time in the invoice view, an N+1 query. Batching them into a single query should bring it back down.</div>
@@ -483,6 +484,7 @@
       <span>
         <a href="https://github.com/costtrace/costtrace">GitHub</a> ·
         <a href="https://www.npmjs.com/package/costtrace">npm</a> ·
+        <a href="https://github.com/costtrace/costtrace/blob/main/METHODOLOGY.md">Methodology</a> ·
         <a href="https://github.com/costtrace/costtrace/security/policy">Security</a> ·
         <a href="mailto:security@costtrace.io">security@costtrace.io</a>
       </span>

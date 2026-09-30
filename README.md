@@ -1,9 +1,9 @@
 # CostTrace
 
-**Trace measured cloud cost to the change that caused it.** · [costtrace.io](https://costtrace.io)
+**Trace measured cloud cost back to the changes you ship.** · [costtrace.io](https://costtrace.io)
 
 Pre-merge cost tools *estimate* what a change will cost. CostTrace *measures* it: after a change
-ships, it reads your real cloud bill, attributes cost to the exact commit and PR that caused it, and
+ships, it reads your real cloud bill, attributes cost to the commit and PR that deployed it, and
 compares the result with the estimate. When the bill moves, `costtrace explain` tells you why.
 
 ```
@@ -34,11 +34,11 @@ It works with any cloud, because it reads the vendor-neutral
 ## Why not just cloud budgets?
 
 Budgets and anomaly alerts (AWS Budgets, AWS Cost Anomaly Detection, and the Azure and GCP
-equivalents) tell you that spend went up. CostTrace tells you **which change** caused it.
+equivalents) tell you that spend went up. CostTrace shows **which changes coincide with it**.
 
 | | AWS Budgets & anomaly alerts | CostTrace |
 |---|---|---|
-| Answers | "Are we over plan?" | **"Which change caused it?"** |
+| Answers | "Are we over plan?" | **"Which change coincides with it?"** |
 | Unit | Account, service, month | **Pull request, commit, deploy** |
 | Reaches | Finance, by email | **The engineer, on the PR** |
 | Estimate vs. actual | — | **Per change** |
@@ -140,7 +140,7 @@ This is a JSON array of deploys, typically written by your CD pipeline:
    "repo": "acme/checkout", "service": "checkout", "estimateMonthly": 310 }]
 ```
 
-`estimateMonthly` is optional. It can come from a pre-merge estimator such as Infracost.
+`estimateMonthly` is optional. It can come from any pre-merge cost estimate, such as your IaC cost tool's output.
 
 ## Use it from AI agents (MCP)
 
@@ -200,6 +200,10 @@ won't appear in exports.
 
 ## Limitations
 
+See [METHODOLOGY.md](METHODOLOGY.md) for exactly how figures and correlations are computed, and when
+to trust them less. In short:
+
+
 - **Tagged resources only.** Resources must carry the `costtrace_*` tags (the SHA tag for direct
   attribution, the service tag for service-level attribution). Shared or untaggable costs are
   reported as unattributable.
@@ -212,7 +216,7 @@ won't appear in exports.
 ## Roadmap
 
 - Direct Oracle Cloud Object Storage connector
-- Estimator adapter: Infracost
+- Import pre-merge estimates automatically from IaC cost tools
 - GitHub Action: post and update the PR comment after deploy
 - Dashboard: cost per change, service and team over time
 

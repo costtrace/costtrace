@@ -1,7 +1,7 @@
 {
   "name": "costtrace",
   "version": "0.4.0",
-  "description": "Trace measured cloud cost to the change that caused it.",
+  "description": "Trace measured cloud cost back to the changes you ship.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",

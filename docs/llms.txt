@@ -1,6 +1,6 @@
 # CostTrace
 
-> CostTrace measures what each deployed code or infrastructure change actually cost, from an organization's real cloud bill, and attributes it to the pull request that caused it. It compares that with the pre-merge estimate. It is open source (Apache-2.0), multi-cloud (AWS, Azure, Google Cloud and Oracle Cloud via the FinOps FOCUS billing standard), and runs locally or in CI.
+> CostTrace measures what each deployed code or infrastructure change actually cost, from an organization's real cloud bill, and correlates it with the pull requests and deploys it coincides with (correlation in time, not proof of cause). It compares that with the pre-merge estimate. It is open source (Apache-2.0), multi-cloud (AWS, Azure, Google Cloud and Oracle Cloud via the FinOps FOCUS billing standard), and runs locally or in CI.
 
 Key ideas:
 - Measured, not estimated: reads FOCUS billing exports, using EffectiveCost (which includes the customer's discounts).
@@ -10,6 +10,7 @@ Key ideas:
 - Not a budget or anomaly alert, and not a pre-merge estimator: it closes the loop between them.
 
 ## Docs
+- [Methodology](https://github.com/costtrace/costtrace/blob/main/METHODOLOGY.md): how attribution and explanations are computed, and their limits
 - [README](https://github.com/costtrace/costtrace#readme): overview, getting FOCUS data, limitations
 - [How attribution works](https://github.com/costtrace/costtrace/tree/main/packages/core#readme)
 - [Cloud connectors](https://github.com/costtrace/costtrace#getting-focus-data): s3:// (@costtrace/aws), azure:// (@costtrace/azure), bq:// (@costtrace/gcp)
